@@ -1,0 +1,9 @@
+export GOPATH=`pwd`
+export GOBIN="$GOPATH/bin"
+export PATH="$PATH:$GOBIN"
+
+echo "GOPATH: $GOPATH"
+echo "GOBIN:  $GOBIN"
+echo "PAHT:   $PATH"
+
+code a10Bridge.code-workspace
