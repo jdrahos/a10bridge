@@ -1,2 +1,4 @@
 bin/*
 pkg/*
+.vscode/*
+src/a10bridge/debug

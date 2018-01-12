@@ -84,8 +84,17 @@ type getMonitorRequest = nameRequest
 type getMonitorResponse struct {
 	Result  result `json:"response"`
 	Monitor struct {
-		Name string `json:"name"`
-	} `json:"healthMonitor"`
+		Name                      string `json:"name"`
+		RetryCount                int    `json:"retry"`
+		RequiredConsecutivePasses int    `json:"consec_pass_reqd"`
+		Interval                  int    `json:"interval"`
+		Timeout                   int    `json:"timeout"`
+		HTTP                      struct {
+			Endpoint   string `json:"url"`
+			Port       int    `json:"port"`
+			ExpectCode string `json:"expect_code"`
+		} `json:"http"`
+	} `json:"health_monitor"`
 }
 
 type createMonitorRequest = monitorRequest
@@ -95,5 +104,33 @@ type createMonitorResponse struct {
 
 type updateMonitorRequest = monitorRequest
 type updateMonitorResponse struct {
+	Result result `json:"response"`
+}
+
+type serviceGroupRequest struct {
+	Base         baseRequest
+	ServiceGroup *model.ServiceGroup
+}
+
+type getServiceGroupRequest = nameRequest
+type getServiceGroupResponse struct {
+	Result       result `json:"response"`
+	ServiceGroup struct {
+		Name              string `json:"name"`
+		HealthMonitorName string `json:"health_monitor"`
+		Members           []struct {
+			ServerName string `json:"server"`
+			Port       int    `json:"port"`
+		} `json:"member_list"`
+	} `json:"service_group"`
+}
+
+type createServiceGroupRequest = serviceGroupRequest
+type createServiceGroupResponse struct {
+	Result result `json:"response"`
+}
+
+type updateServiceGroupRequest = serviceGroupRequest
+type updateServiceGroupResponse struct {
 	Result result `json:"response"`
 }

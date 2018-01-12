@@ -5,9 +5,9 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"io/ioutil"
 	"net/http"
+	"text/template"
 )
 
 func HttpGet(url string, response interface{}) error {
@@ -26,6 +26,9 @@ func HttpPost(url string, tplPath string, request interface{}, response interfac
 
 	var writer bytes.Buffer
 	err = tmpl.Execute(&writer, request)
+	if err != nil {
+		return err
+	}
 
 	fmt.Println(string(writer.Bytes()))
 

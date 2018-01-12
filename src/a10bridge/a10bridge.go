@@ -106,5 +106,11 @@ func main() {
 			glog.Errorf("Failed to process health check %s, error: %s", serviceGroupName, err)
 			continue
 		}
+
+		err = processors.ServiceGroup.ProcessServiceGroup(serviceGroup, failedNodeNames)
+		if err != nil {
+			glog.Errorf("Failed to process service group %s, error: %s", serviceGroupName, err)
+			continue
+		}
 	}
 }

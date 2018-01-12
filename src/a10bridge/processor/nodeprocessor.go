@@ -95,6 +95,10 @@ func (processor nodeProcessorImpl) ProcessNode(node *model.Node) error {
 	return a10err
 }
 
+func isSame(node *model.Node, server *model.Server) {
+
+}
+
 func buildServer(node *model.Node) (*model.Server, error) {
 	var err error
 	server := model.Server{}

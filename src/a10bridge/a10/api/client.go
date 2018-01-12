@@ -15,4 +15,8 @@ type Client interface {
 	GetHealthMonitor(monitorName string) (*model.HealthCheck, A10Error)
 	CreateHealthMonitor(monitor *model.HealthCheck) A10Error
 	UpdateHealthMonitor(monitor *model.HealthCheck) A10Error
+
+	GetServiceGroup(serviceGroupName string) (*model.ServiceGroup, A10Error)
+	CreateServiceGroup(serviceGroup *model.ServiceGroup) A10Error
+	UpdateServiceGroup(serviceGroup *model.ServiceGroup) A10Error
 }

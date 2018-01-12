@@ -33,3 +33,13 @@ func ApplyTemplate(data interface{}, name string, tpl string) (string, error) {
 
 	return url, err
 }
+
+//Contains check if a string slice contains string
+func Contains(slice []string, lookFor string) bool {
+	for _, item := range slice {
+		if item == lookFor {
+			return true
+		}
+	}
+	return false
+}

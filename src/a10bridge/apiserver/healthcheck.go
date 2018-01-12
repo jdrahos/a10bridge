@@ -47,6 +47,7 @@ func buildHealthCheck(controllerDaemonSet v1beta1.DaemonSet, mainContainer *v1.C
 		Interval:                  int(livenessProbe.PeriodSeconds),
 		RetryCount:                int(livenessProbe.FailureThreshold),
 		RequiredConsecutivePasses: int(livenessProbe.SuccessThreshold),
+		Timeout:                   int(livenessProbe.TimeoutSeconds),
 		ExpectCode:                "200",
 	}, nil
 }

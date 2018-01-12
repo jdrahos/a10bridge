@@ -5,6 +5,7 @@ import (
 	"a10bridge/args"
 	"a10bridge/model"
 	"a10bridge/util"
+	"strings"
 )
 
 type v2Client struct {
@@ -174,8 +175,16 @@ func (client v2Client) GetHealthMonitor(monitorName string) (*model.HealthCheck,
 		return monitor, response.Result.Error
 	}
 
+	mon := response.Monitor
 	monitor = &model.HealthCheck{
-		Name: response.Monitor.Name,
+		Name:                      mon.Name,
+		Endpoint:                  strings.TrimPrefix(mon.HTTP.Endpoint, "GET "),
+		ExpectCode:                mon.HTTP.ExpectCode,
+		Port:                      mon.HTTP.Port,
+		Interval:                  mon.Interval,
+		RetryCount:                mon.RetryCount,
+		Timeout:                   mon.Timeout,
+		RequiredConsecutivePasses: mon.RequiredConsecutivePasses,
 	}
 
 	return monitor, nil
@@ -218,6 +227,93 @@ func (client v2Client) UpdateHealthMonitor(monitor *model.HealthCheck) api.A10Er
 
 	response := updateMonitorResponse{}
 	err = util.HttpPost(url, "a10/v2/tpl/health.monitor.request", request, &response)
+	if err != nil {
+		return buildA10Error(err)
+	}
+
+	return nil
+}
+
+func (client v2Client) GetServiceGroup(serviceGroupName string) (*model.ServiceGroup, api.A10Error) {
+	var serviceGroup *model.ServiceGroup
+	urltpl := "{{.Base.A10URL}}/services/rest/V2.1/?session_id={{.Base.SessionID}}&format=json&method=slb.service_group.search"
+
+	request := getServiceGroupRequest{
+		Base: client.baseRequest,
+		Name: serviceGroupName,
+	}
+
+	url, err := util.ApplyTemplate(request, "get monitor", urltpl)
+	if err != nil {
+		return serviceGroup, buildA10Error(err)
+	}
+
+	response := getServiceGroupResponse{}
+	err = util.HttpPost(url, "a10/v2/tpl/name.request", request, &response)
+	if err != nil {
+		return serviceGroup, buildA10Error(err)
+	}
+
+	if response.Result.Status == "fail" {
+		return serviceGroup, response.Result.Error
+	}
+
+	sg := response.ServiceGroup
+	serviceGroup = &model.ServiceGroup{
+		Name: sg.Name,
+		Health: &model.HealthCheck{
+			Name: sg.HealthMonitorName,
+		},
+		Members: make([]*model.Member, len(sg.Members)),
+	}
+
+	for idx, member := range sg.Members {
+		serviceGroup.Members[idx] = &model.Member{
+			Port:       member.Port,
+			ServerName: member.ServerName,
+		}
+	}
+
+	return serviceGroup, nil
+}
+
+func (client v2Client) CreateServiceGroup(serviceGroup *model.ServiceGroup) api.A10Error {
+	urltpl := "{{.Base.A10URL}}/services/rest/V2.1/?session_id={{.Base.SessionID}}&format=json&method=slb.service_group.create"
+
+	request := createServiceGroupRequest{
+		Base:         client.baseRequest,
+		ServiceGroup: serviceGroup,
+	}
+
+	url, err := util.ApplyTemplate(request, "service group request", urltpl)
+	if err != nil {
+		return buildA10Error(err)
+	}
+
+	response := createServiceGroupResponse{}
+	err = util.HttpPost(url, "a10/v2/tpl/svcgrp.request", request, &response)
+	if err != nil {
+		return buildA10Error(err)
+	}
+
+	return nil
+}
+
+func (client v2Client) UpdateServiceGroup(serviceGroup *model.ServiceGroup) api.A10Error {
+	urltpl := "{{.Base.A10URL}}/services/rest/V2.1/?session_id={{.Base.SessionID}}&format=json&method=slb.service_group.update"
+
+	request := updateServiceGroupRequest{
+		Base:         client.baseRequest,
+		ServiceGroup: serviceGroup,
+	}
+
+	url, err := util.ApplyTemplate(request, "service group request", urltpl)
+	if err != nil {
+		return buildA10Error(err)
+	}
+
+	response := updateServiceGroupResponse{}
+	err = util.HttpPost(url, "a10/v2/tpl/svcgrp.request", request, &response)
 	if err != nil {
 		return buildA10Error(err)
 	}
