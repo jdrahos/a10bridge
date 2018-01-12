@@ -1,0 +1,23 @@
+{
+  "health_monitor": {
+    "name": "{{.Monitor.Name}}",
+    "retry": {{.Monitor.RetryCount}},
+    "consec_pass_reqd": {{.Monitor.RequiredConsecutivePasses}},
+    "interval": {{.Monitor.Interval}},
+    "timeout": {{.Monitor.Timeout}},
+    "override_port": {{.Monitor.Port}},
+    "type": 3,
+    "http": {
+      "port": {{.Monitor.Port}},
+      "url": "GET {{.Monitor.Endpoint}}",
+      "expect_code": "{{.Monitor.ExpectCode}}",
+      "passive": {
+        "status": 0,
+        "status_code_2xx": 0,
+        "threshold": 75,
+        "sample_threshold": 50,
+        "interval": 10
+      }
+    }
+  }
+}

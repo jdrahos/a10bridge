@@ -75,10 +75,25 @@ type updateServerResponse struct {
 	Result result `json:"response"`
 }
 
+type monitorRequest struct {
+	Base    baseRequest
+	Monitor *model.HealthCheck
+}
+
 type getMonitorRequest = nameRequest
 type getMonitorResponse struct {
 	Result  result `json:"response"`
 	Monitor struct {
 		Name string `json:"name"`
 	} `json:"healthMonitor"`
+}
+
+type createMonitorRequest = monitorRequest
+type createMonitorResponse struct {
+	Result result `json:"response"`
+}
+
+type updateMonitorRequest = monitorRequest
+type updateMonitorResponse struct {
+	Result result `json:"response"`
 }

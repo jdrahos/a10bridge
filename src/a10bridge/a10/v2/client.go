@@ -109,7 +109,7 @@ func (client v2Client) GetServer(serverName string) (*model.Server, api.A10Error
 func (client v2Client) CreateServer(server *model.Server) api.A10Error {
 	urltpl := "{{.Base.A10URL}}/services/rest/V2.1/?session_id={{.Base.SessionID}}&format=json&method=slb.server.create"
 
-	request := serverRequest{
+	request := createServerRequest{
 		Base:   client.baseRequest,
 		Server: server,
 	}
@@ -119,7 +119,7 @@ func (client v2Client) CreateServer(server *model.Server) api.A10Error {
 		return buildA10Error(err)
 	}
 
-	response := updateServerResponse{}
+	response := createServerResponse{}
 	err = util.HttpPost(url, "a10/v2/tpl/server.request", request, &response)
 	if err != nil {
 		return buildA10Error(err)
@@ -131,7 +131,7 @@ func (client v2Client) CreateServer(server *model.Server) api.A10Error {
 func (client v2Client) UpdateServer(server *model.Server) api.A10Error {
 	urltpl := "{{.Base.A10URL}}/services/rest/V2.1/?session_id={{.Base.SessionID}}&format=json&method=slb.server.update"
 
-	request := serverRequest{
+	request := updateServerRequest{
 		Base:   client.baseRequest,
 		Server: server,
 	}
@@ -182,9 +182,45 @@ func (client v2Client) GetHealthMonitor(monitorName string) (*model.HealthCheck,
 }
 
 func (client v2Client) CreateHealthMonitor(monitor *model.HealthCheck) api.A10Error {
+	urltpl := "{{.Base.A10URL}}/services/rest/V2.1/?session_id={{.Base.SessionID}}&format=json&method=slb.hm.create"
+
+	request := createMonitorRequest{
+		Base:    client.baseRequest,
+		Monitor: monitor,
+	}
+
+	url, err := util.ApplyTemplate(request, "monitor request", urltpl)
+	if err != nil {
+		return buildA10Error(err)
+	}
+
+	response := createMonitorResponse{}
+	err = util.HttpPost(url, "a10/v2/tpl/health.monitor.request", request, &response)
+	if err != nil {
+		return buildA10Error(err)
+	}
+
 	return nil
 }
 
 func (client v2Client) UpdateHealthMonitor(monitor *model.HealthCheck) api.A10Error {
+	urltpl := "{{.Base.A10URL}}/services/rest/V2.1/?session_id={{.Base.SessionID}}&format=json&method=slb.hm.update"
+
+	request := updateMonitorRequest{
+		Base:    client.baseRequest,
+		Monitor: monitor,
+	}
+
+	url, err := util.ApplyTemplate(request, "monitor request", urltpl)
+	if err != nil {
+		return buildA10Error(err)
+	}
+
+	response := updateMonitorResponse{}
+	err = util.HttpPost(url, "a10/v2/tpl/health.monitor.request", request, &response)
+	if err != nil {
+		return buildA10Error(err)
+	}
+
 	return nil
 }
