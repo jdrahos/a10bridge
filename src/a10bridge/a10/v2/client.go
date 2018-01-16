@@ -5,6 +5,7 @@ import (
 	"a10bridge/args"
 	"a10bridge/model"
 	"a10bridge/util"
+	"strconv"
 	"strings"
 )
 
@@ -74,8 +75,8 @@ func (client v2Client) Close() api.A10Error {
 	return nil
 }
 
-func (client v2Client) GetServer(serverName string) (*model.Server, api.A10Error) {
-	var server *model.Server
+func (client v2Client) GetServer(serverName string) (*model.Node, api.A10Error) {
+	var server *model.Node
 	urltpl := "{{.Base.A10URL}}/services/rest/V2.1/?session_id={{.Base.SessionID}}&format=json&method=slb.server.search"
 
 	request := getServerRequest{
@@ -98,16 +99,16 @@ func (client v2Client) GetServer(serverName string) (*model.Server, api.A10Error
 		return server, response.Result.Error
 	}
 
-	server = &model.Server{
-		Name:   response.Server.Name,
-		IP:     response.Server.IP,
-		Weight: response.Server.Weight,
+	server = &model.Node{
+		A10Server: response.Server.Name,
+		IPAddress: response.Server.IP,
+		Weight:    strconv.Itoa(response.Server.Weight),
 	}
 
 	return server, nil
 }
 
-func (client v2Client) CreateServer(server *model.Server) api.A10Error {
+func (client v2Client) CreateServer(server *model.Node) api.A10Error {
 	urltpl := "{{.Base.A10URL}}/services/rest/V2.1/?session_id={{.Base.SessionID}}&format=json&method=slb.server.create"
 
 	request := createServerRequest{
@@ -129,7 +130,7 @@ func (client v2Client) CreateServer(server *model.Server) api.A10Error {
 	return nil
 }
 
-func (client v2Client) UpdateServer(server *model.Server) api.A10Error {
+func (client v2Client) UpdateServer(server *model.Node) api.A10Error {
 	urltpl := "{{.Base.A10URL}}/services/rest/V2.1/?session_id={{.Base.SessionID}}&format=json&method=slb.server.update"
 
 	request := updateServerRequest{
@@ -269,8 +270,9 @@ func (client v2Client) GetServiceGroup(serviceGroupName string) (*model.ServiceG
 
 	for idx, member := range sg.Members {
 		serviceGroup.Members[idx] = &model.Member{
-			Port:       member.Port,
-			ServerName: member.ServerName,
+			Port:             member.Port,
+			ServerName:       member.ServerName,
+			ServiceGroupName: serviceGroup.Name,
 		}
 	}
 
@@ -319,4 +321,64 @@ func (client v2Client) UpdateServiceGroup(serviceGroup *model.ServiceGroup) api.
 	}
 
 	return nil
+}
+
+func (client v2Client) CreateMember(member *model.Member) api.A10Error {
+	urltpl := "{{.Base.A10URL}}/services/rest/V2.1/?session_id={{.Base.SessionID}}&format=json&method=slb.service_group.member.create"
+
+	request := createServiceGroupMemberRequest{
+		Base:   client.baseRequest,
+		Member: member,
+	}
+
+	url, err := util.ApplyTemplate(request, "service group member request", urltpl)
+	if err != nil {
+		return buildA10Error(err)
+	}
+
+	response := createServiceGroupMemberResponse{}
+	err = util.HttpPost(url, "a10/v2/tpl/svcgrp.member.request", request, &response)
+	if err != nil {
+		return buildA10Error(err)
+	}
+
+	return nil
+}
+
+func (client v2Client) DeleteMember(member *model.Member) api.A10Error {
+	urltpl := "{{.Base.A10URL}}/services/rest/V2.1/?session_id={{.Base.SessionID}}&format=json&method=slb.service_group.member.delete"
+
+	request := deleteServiceGroupMemberRequest{
+		Base:   client.baseRequest,
+		Member: member,
+	}
+
+	url, err := util.ApplyTemplate(request, "service group member request", urltpl)
+	if err != nil {
+		return buildA10Error(err)
+	}
+
+	response := deleteServiceGroupMemberResponse{}
+	err = util.HttpPost(url, "a10/v2/tpl/svcgrp.member.request", request, &response)
+	if err != nil {
+		return buildA10Error(err)
+	}
+
+	return nil
+}
+
+func (client v2Client) IsServerNotFound(err api.A10Error) bool {
+	return err.Code() == 67174402
+}
+
+func (client v2Client) IsHealthMonitorNotFound(err api.A10Error) bool {
+	return err.Code() == 33619968
+}
+
+func (client v2Client) IsServiceGroupNotFound(err api.A10Error) bool {
+	return err.Code() == 67305473
+}
+
+func (client v2Client) IsMemberAlreadyExists(err api.A10Error) bool {
+	return err.Code() == 1405
 }

@@ -1,7 +1,7 @@
 {
   "server": {
-    "name": "{{.Server.Name}}",
-    "host": "{{.Server.IP}}",
+    "name": "{{.Server.A10Server}}",
+    "host": "{{.Server.IPAddress}}",
     "weight": {{.Server.Weight}},
     "conn_limit_log": 1
   }

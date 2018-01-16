@@ -19,7 +19,7 @@ func (client Client) Close() error {
 	return nil
 }
 
-func (client Client) GetServer(serverName string) (model.Server, error) {
-	var server model.Server
+func (client Client) GetServer(serverName string) (*model.Node, error) {
+	var server *model.Node
 	return server, nil
 }

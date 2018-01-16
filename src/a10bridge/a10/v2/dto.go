@@ -31,7 +31,7 @@ type result struct {
 	Status string   `json:"status"`
 }
 
-type baseResponse struct {
+type simpleResponse struct {
 	Result result `json:"response"`
 }
 
@@ -47,12 +47,12 @@ type loginResponse struct {
 	SessionID string `json:"session_id"`
 }
 
-type logoutResponse = baseResponse
+type logoutResponse = simpleResponse
 type logoutRequest = baseRequest
 
 type serverRequest struct {
 	Base   baseRequest
-	Server *model.Server
+	Server *model.Node
 }
 
 type getServerRequest = nameRequest
@@ -66,14 +66,10 @@ type getServerResponse struct {
 }
 
 type createServerRequest = serverRequest
-type createServerResponse struct {
-	Result result `json:"response"`
-}
+type createServerResponse = simpleResponse
 
 type updateServerRequest = serverRequest
-type updateServerResponse struct {
-	Result result `json:"response"`
-}
+type updateServerResponse = simpleResponse
 
 type monitorRequest struct {
 	Base    baseRequest
@@ -98,14 +94,10 @@ type getMonitorResponse struct {
 }
 
 type createMonitorRequest = monitorRequest
-type createMonitorResponse struct {
-	Result result `json:"response"`
-}
+type createMonitorResponse = simpleResponse
 
 type updateMonitorRequest = monitorRequest
-type updateMonitorResponse struct {
-	Result result `json:"response"`
-}
+type updateMonitorResponse = simpleResponse
 
 type serviceGroupRequest struct {
 	Base         baseRequest
@@ -126,11 +118,18 @@ type getServiceGroupResponse struct {
 }
 
 type createServiceGroupRequest = serviceGroupRequest
-type createServiceGroupResponse struct {
-	Result result `json:"response"`
-}
+type createServiceGroupResponse = simpleResponse
 
 type updateServiceGroupRequest = serviceGroupRequest
-type updateServiceGroupResponse struct {
-	Result result `json:"response"`
+type updateServiceGroupResponse = simpleResponse
+
+type serviceGroupMemberRequest struct {
+	Base   baseRequest
+	Member *model.Member
 }
+
+type createServiceGroupMemberRequest = serviceGroupMemberRequest
+type createServiceGroupMemberResponse = simpleResponse
+
+type deleteServiceGroupMemberRequest = serviceGroupMemberRequest
+type deleteServiceGroupMemberResponse = simpleResponse

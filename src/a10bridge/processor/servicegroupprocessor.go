@@ -70,8 +70,7 @@ func (processor serviceGroupProcessorImpl) ProcessServiceGroup(serviceGroup *mod
 
 	a10ServiceGroup, a10err := processor.a10Client.GetServiceGroup(serviceGroup.Name)
 	if a10err != nil {
-		//health monitor not found
-		if a10err.Code() == 67305473 {
+		if processor.a10Client.IsServiceGroupNotFound(a10err) {
 			a10err = processor.a10Client.CreateServiceGroup(serviceGroup)
 		}
 	} else {
@@ -87,6 +86,28 @@ func (processor serviceGroupProcessorImpl) ProcessServiceGroup(serviceGroup *mod
 		} else {
 			glog.Info("A10 Service group configuration is in sync with kubernetes")
 		}
+
+		missingMembers := findMissingMembers(serviceGroup.Members, a10ServiceGroup.Members)
+
+		if len(missingMembers) > 0 {
+			for _, member := range missingMembers {
+				err := processor.a10Client.CreateMember(member)
+				if err != nil && !processor.a10Client.IsMemberAlreadyExists(err) {
+					glog.Errorf("Failed to create member %s:%d for service group %s. error: %s", member.ServerName, member.Port, member.ServiceGroupName, err)
+				}
+			}
+		}
+
+		extraMembers := findExtraMembers(serviceGroup.Members, a10ServiceGroup.Members)
+
+		if len(extraMembers) > 0 {
+			for _, member := range extraMembers {
+				err := processor.a10Client.DeleteMember(member)
+				if err != nil {
+					glog.Errorf("Failed to delete member %s:%d for service group %s. error: %s", member.ServerName, member.Port, member.ServiceGroupName, err)
+				}
+			}
+		}
 	}
 
 	return a10err
@@ -98,19 +119,33 @@ func sameGroupConfigs(serviceGroup *model.ServiceGroup, a10ServiceGroup *model.S
 		return false
 	}
 
-	if len(serviceGroup.Members) != len(a10ServiceGroup.Members) {
-		glog.Infof("Numbers of memmbers in kubernetes '%d' and a10 '%d' don't match", len(serviceGroup.Members), len(a10ServiceGroup.Members))
-		return false
-	}
+	return true
+}
 
-	for _, member := range serviceGroup.Members {
-		if !containsMemeber(a10ServiceGroup.Members, member) {
-			glog.Infof("Memeber '%s' is missing in a10", member)
-			return false
+func findExtraMembers(expected []*model.Member, members []*model.Member) []*model.Member {
+	extraMembers := make([]*model.Member, 0)
+
+	for _, member := range members {
+		if !containsMemeber(expected, member) {
+			glog.Infof("'%s' should not be a member", member)
+			extraMembers = append(extraMembers, member)
 		}
 	}
 
-	return true
+	return extraMembers
+}
+
+func findMissingMembers(expected []*model.Member, members []*model.Member) []*model.Member {
+	missingMembers := make([]*model.Member, 0)
+
+	for _, member := range expected {
+		if !containsMemeber(members, member) {
+			glog.Infof("'%s' should be a member", member)
+			missingMembers = append(missingMembers, member)
+		}
+	}
+
+	return missingMembers
 }
 
 func containsMemeber(members []*model.Member, lookFor *model.Member) bool {

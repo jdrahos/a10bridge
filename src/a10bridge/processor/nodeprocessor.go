@@ -6,7 +6,6 @@ import (
 	"a10bridge/model"
 	"a10bridge/util"
 	"fmt"
-	"strconv"
 
 	"github.com/golang/glog"
 )
@@ -57,12 +56,8 @@ func (processor nodeProcessorImpl) ProcessNode(node *model.Node) error {
 	server, a10err := processor.a10Client.GetServer(node.Name)
 	if a10err != nil {
 		//server not found
-		if a10err.Code() == 67174402 {
-			server, converr := buildServer(node)
-			if converr != nil {
-				return converr
-			}
-			a10err = processor.a10Client.CreateServer(server)
+		if processor.a10Client.IsServerNotFound(a10err) {
+			a10err = processor.a10Client.CreateServer(node)
 			if a10err != nil {
 				return a10err
 			}
@@ -72,16 +67,10 @@ func (processor nodeProcessorImpl) ProcessNode(node *model.Node) error {
 	} else {
 		fmt.Println(util.ToJSON(server))
 
-		nodeIP := node.IPAddress.String()
-		nodeWeight, converr := strconv.Atoi(node.Weight)
-		if converr != nil {
-			return converr
-		}
-
-		if nodeIP != server.IP || nodeWeight != server.Weight {
-			glog.Infof("Server and node configurations differ, setting the server to ip %s and weight %s", nodeIP, nodeWeight)
-			server.IP = nodeIP
-			server.Weight = nodeWeight
+		if !isSame(node, server) {
+			glog.Infof("Server and node configurations differ, setting the server to ip %s and weight %s", node.IPAddress, node.Weight)
+			server.IPAddress = node.IPAddress
+			server.Weight = node.Weight
 			a10err = processor.a10Client.UpdateServer(server)
 			if a10err != nil {
 				return a10err
@@ -95,16 +84,16 @@ func (processor nodeProcessorImpl) ProcessNode(node *model.Node) error {
 	return a10err
 }
 
-func isSame(node *model.Node, server *model.Server) {
+func isSame(node *model.Node, server *model.Node) bool {
+	if node.IPAddress != server.IPAddress {
+		glog.Infof("Server ip addresses '%s' and '%s' don't match", server.IPAddress, node.IPAddress)
+		return false
+	}
 
-}
+	if node.Weight != server.Weight {
+		glog.Infof("Server weights '%s' and '%s' don't match", server.IPAddress, node.IPAddress)
+		return false
+	}
 
-func buildServer(node *model.Node) (*model.Server, error) {
-	var err error
-	server := model.Server{}
-	server.IP = node.IPAddress.String()
-	server.Name = node.Name
-	server.Weight, err = strconv.Atoi(node.Weight)
-
-	return &server, err
+	return true
 }

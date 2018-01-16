@@ -16,7 +16,7 @@ func buildNode(k8sNode v1.Node) (*model.Node, error) {
 	if err == nil {
 		node = model.Node{
 			Name:      name,
-			IPAddress: addr[0],
+			IPAddress: addr[0].String(),
 			A10Server: findA10ServerName(k8sNode),
 			Weight:    findNodeWeight(k8sNode, "1"),
 			Labels:    k8sNode.Labels,

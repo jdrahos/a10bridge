@@ -1,0 +1,7 @@
+{
+  "member" : {
+    "server" : "{{.Member.ServerName}}",
+    "port" : {{.Member.Port}}
+  },
+  "name" : "{{.Member.ServiceGroupName}}"
+}

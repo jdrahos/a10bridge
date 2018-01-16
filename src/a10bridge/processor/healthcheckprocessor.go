@@ -26,7 +26,7 @@ func (processor healthCheckProcessorImpl) ProcessHealthCheck(healthCheck *model.
 	healthMonitor, a10err := processor.a10Client.GetHealthMonitor(healthCheck.Name)
 	if a10err != nil {
 		//health monitor not found
-		if a10err.Code() == 33619968 {
+		if processor.a10Client.IsHealthMonitorNotFound(a10err) {
 			healthMonitor = healthCheck
 			a10err = processor.a10Client.CreateHealthMonitor(healthMonitor)
 			if a10err != nil {
