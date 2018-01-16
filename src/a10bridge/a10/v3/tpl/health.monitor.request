@@ -1,0 +1,25 @@
+{
+  "monitor": {
+    "name": "{{.Monitor.Name}}",
+    "retry": {{.Monitor.RetryCount}},
+    "up-retry": {{.Monitor.RequiredConsecutivePasses}},
+    "interval": {{.Monitor.Interval}},
+    "timeout": {{.Monitor.Timeout}},
+    "override-port": {{.Monitor.Port}},
+    "passive":0,
+    "strict-retry-on-server-err-resp":1,
+    "disable-after-down":0,
+    "method":{
+	    "http": {
+	      "http":1,
+		  "http-port": {{.Monitor.Port}},
+		  "http-url":1,
+		  "http-expect":1,
+		  "http-response-code": "{{.Monitor.ExpectCode}}",
+		  "url-type":"GET",
+		  "url-path":"{{.Monitor.Endpoint}}",
+		  "http-kerberos-auth":0
+		}
+    }
+  }
+}

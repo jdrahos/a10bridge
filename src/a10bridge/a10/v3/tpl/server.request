@@ -1,0 +1,9 @@
+{
+  "server": {
+    "name": "{{.Server.A10Server}}",
+    "host": "{{.Server.IPAddress}}",
+    "action": "enable",
+    "weight": {{.Server.Weight}},
+    "conn-limit": 1000
+  }
+}

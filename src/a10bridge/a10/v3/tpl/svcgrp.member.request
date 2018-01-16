@@ -1,0 +1,9 @@
+{
+  "member" : {
+    "name" : "{{.Member.ServerName}}",
+    "port" : {{.Member.Port}},
+    "member-state": "enable",
+    "member-stats-data-disable": 0,
+    "member-priority": 1
+  }
+}
