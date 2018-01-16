@@ -10,7 +10,8 @@ import (
 )
 
 type v2Client struct {
-	baseRequest baseRequest
+	baseRequest   baseRequest
+	commonHeaders map[string]string
 }
 
 func buildA10Error(err error) api.A10Error {
@@ -26,20 +27,14 @@ func buildA10Error(err error) api.A10Error {
 func Connect(arguments args.Args) (api.Client, api.A10Error) {
 	var client api.Client
 	urltpl := "{{.A10URL}}/services/rest/V2.1/?format=json&method=authenticate&username={{.A10User}}&password={{.A10Pwd}}"
-
 	request := loginRequest{
 		A10URL:  arguments.A10URL,
 		A10User: arguments.A10User,
 		A10Pwd:  arguments.A10Pwd,
 	}
-
-	url, err := util.ApplyTemplate(request, "login", urltpl)
-	if err != nil {
-		return client, buildA10Error(err)
-	}
-
+	commonHeaders := map[string]string{}
 	response := loginResponse{}
-	err = util.HttpGet(url, &response)
+	err := util.HttpGet(urltpl, &request, &response, commonHeaders)
 	if err != nil {
 		return client, buildA10Error(err)
 	}
@@ -49,6 +44,7 @@ func Connect(arguments args.Args) (api.Client, api.A10Error) {
 			A10URL:    arguments.A10URL,
 			SessionID: response.SessionID,
 		},
+		commonHeaders: commonHeaders,
 	}
 
 	return client, buildA10Error(err)
@@ -56,14 +52,10 @@ func Connect(arguments args.Args) (api.Client, api.A10Error) {
 
 func (client v2Client) Close() api.A10Error {
 	urltpl := "{{.A10URL}}/services/rest/V2.1/?format=json&method=session.close&session_id={{.SessionID}}"
-	request := client.baseRequest
-	url, err := util.ApplyTemplate(request, "logout", urltpl)
-	if err != nil {
-		return buildA10Error(err)
-	}
 
+	request := client.baseRequest
 	response := logoutResponse{}
-	err = util.HttpGet(url, &response)
+	err := util.HttpGet(urltpl, &request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
 	}
@@ -78,19 +70,12 @@ func (client v2Client) Close() api.A10Error {
 func (client v2Client) GetServer(serverName string) (*model.Node, api.A10Error) {
 	var server *model.Node
 	urltpl := "{{.Base.A10URL}}/services/rest/V2.1/?session_id={{.Base.SessionID}}&format=json&method=slb.server.search"
-
 	request := getServerRequest{
 		Base: client.baseRequest,
 		Name: serverName,
 	}
-
-	url, err := util.ApplyTemplate(request, "get server", urltpl)
-	if err != nil {
-		return server, buildA10Error(err)
-	}
-
 	response := getServerResponse{}
-	err = util.HttpPost(url, "a10/v2/tpl/name.request", request, &response)
+	err := util.HttpPost(urltpl, "a10/v2/tpl/name.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return server, buildA10Error(err)
 	}
@@ -110,19 +95,12 @@ func (client v2Client) GetServer(serverName string) (*model.Node, api.A10Error) 
 
 func (client v2Client) CreateServer(server *model.Node) api.A10Error {
 	urltpl := "{{.Base.A10URL}}/services/rest/V2.1/?session_id={{.Base.SessionID}}&format=json&method=slb.server.create"
-
 	request := createServerRequest{
 		Base:   client.baseRequest,
 		Server: server,
 	}
-
-	url, err := util.ApplyTemplate(request, "create server", urltpl)
-	if err != nil {
-		return buildA10Error(err)
-	}
-
 	response := createServerResponse{}
-	err = util.HttpPost(url, "a10/v2/tpl/server.request", request, &response)
+	err := util.HttpPost(urltpl, "a10/v2/tpl/server.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
 	}
@@ -132,19 +110,12 @@ func (client v2Client) CreateServer(server *model.Node) api.A10Error {
 
 func (client v2Client) UpdateServer(server *model.Node) api.A10Error {
 	urltpl := "{{.Base.A10URL}}/services/rest/V2.1/?session_id={{.Base.SessionID}}&format=json&method=slb.server.update"
-
 	request := updateServerRequest{
 		Base:   client.baseRequest,
 		Server: server,
 	}
-
-	url, err := util.ApplyTemplate(request, "update server", urltpl)
-	if err != nil {
-		return buildA10Error(err)
-	}
-
 	response := updateServerResponse{}
-	err = util.HttpPost(url, "a10/v2/tpl/server.request", request, &response)
+	err := util.HttpPost(urltpl, "a10/v2/tpl/server.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
 	}
@@ -155,19 +126,12 @@ func (client v2Client) UpdateServer(server *model.Node) api.A10Error {
 func (client v2Client) GetHealthMonitor(monitorName string) (*model.HealthCheck, api.A10Error) {
 	var monitor *model.HealthCheck
 	urltpl := "{{.Base.A10URL}}/services/rest/V2.1/?session_id={{.Base.SessionID}}&format=json&method=slb.hm.search"
-
 	request := getMonitorRequest{
 		Base: client.baseRequest,
 		Name: monitorName,
 	}
-
-	url, err := util.ApplyTemplate(request, "get monitor", urltpl)
-	if err != nil {
-		return monitor, buildA10Error(err)
-	}
-
 	response := getMonitorResponse{}
-	err = util.HttpPost(url, "a10/v2/tpl/name.request", request, &response)
+	err := util.HttpPost(urltpl, "a10/v2/tpl/name.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return monitor, buildA10Error(err)
 	}
@@ -193,19 +157,12 @@ func (client v2Client) GetHealthMonitor(monitorName string) (*model.HealthCheck,
 
 func (client v2Client) CreateHealthMonitor(monitor *model.HealthCheck) api.A10Error {
 	urltpl := "{{.Base.A10URL}}/services/rest/V2.1/?session_id={{.Base.SessionID}}&format=json&method=slb.hm.create"
-
 	request := createMonitorRequest{
 		Base:    client.baseRequest,
 		Monitor: monitor,
 	}
-
-	url, err := util.ApplyTemplate(request, "monitor request", urltpl)
-	if err != nil {
-		return buildA10Error(err)
-	}
-
 	response := createMonitorResponse{}
-	err = util.HttpPost(url, "a10/v2/tpl/health.monitor.request", request, &response)
+	err := util.HttpPost(urltpl, "a10/v2/tpl/health.monitor.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
 	}
@@ -215,19 +172,12 @@ func (client v2Client) CreateHealthMonitor(monitor *model.HealthCheck) api.A10Er
 
 func (client v2Client) UpdateHealthMonitor(monitor *model.HealthCheck) api.A10Error {
 	urltpl := "{{.Base.A10URL}}/services/rest/V2.1/?session_id={{.Base.SessionID}}&format=json&method=slb.hm.update"
-
 	request := updateMonitorRequest{
 		Base:    client.baseRequest,
 		Monitor: monitor,
 	}
-
-	url, err := util.ApplyTemplate(request, "monitor request", urltpl)
-	if err != nil {
-		return buildA10Error(err)
-	}
-
 	response := updateMonitorResponse{}
-	err = util.HttpPost(url, "a10/v2/tpl/health.monitor.request", request, &response)
+	err := util.HttpPost(urltpl, "a10/v2/tpl/health.monitor.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
 	}
@@ -238,19 +188,12 @@ func (client v2Client) UpdateHealthMonitor(monitor *model.HealthCheck) api.A10Er
 func (client v2Client) GetServiceGroup(serviceGroupName string) (*model.ServiceGroup, api.A10Error) {
 	var serviceGroup *model.ServiceGroup
 	urltpl := "{{.Base.A10URL}}/services/rest/V2.1/?session_id={{.Base.SessionID}}&format=json&method=slb.service_group.search"
-
 	request := getServiceGroupRequest{
 		Base: client.baseRequest,
 		Name: serviceGroupName,
 	}
-
-	url, err := util.ApplyTemplate(request, "get monitor", urltpl)
-	if err != nil {
-		return serviceGroup, buildA10Error(err)
-	}
-
 	response := getServiceGroupResponse{}
-	err = util.HttpPost(url, "a10/v2/tpl/name.request", request, &response)
+	err := util.HttpPost(urltpl, "a10/v2/tpl/name.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return serviceGroup, buildA10Error(err)
 	}
@@ -281,19 +224,12 @@ func (client v2Client) GetServiceGroup(serviceGroupName string) (*model.ServiceG
 
 func (client v2Client) CreateServiceGroup(serviceGroup *model.ServiceGroup) api.A10Error {
 	urltpl := "{{.Base.A10URL}}/services/rest/V2.1/?session_id={{.Base.SessionID}}&format=json&method=slb.service_group.create"
-
 	request := createServiceGroupRequest{
 		Base:         client.baseRequest,
 		ServiceGroup: serviceGroup,
 	}
-
-	url, err := util.ApplyTemplate(request, "service group request", urltpl)
-	if err != nil {
-		return buildA10Error(err)
-	}
-
 	response := createServiceGroupResponse{}
-	err = util.HttpPost(url, "a10/v2/tpl/svcgrp.request", request, &response)
+	err := util.HttpPost(urltpl, "a10/v2/tpl/svcgrp.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
 	}
@@ -303,19 +239,12 @@ func (client v2Client) CreateServiceGroup(serviceGroup *model.ServiceGroup) api.
 
 func (client v2Client) UpdateServiceGroup(serviceGroup *model.ServiceGroup) api.A10Error {
 	urltpl := "{{.Base.A10URL}}/services/rest/V2.1/?session_id={{.Base.SessionID}}&format=json&method=slb.service_group.update"
-
 	request := updateServiceGroupRequest{
 		Base:         client.baseRequest,
 		ServiceGroup: serviceGroup,
 	}
-
-	url, err := util.ApplyTemplate(request, "service group request", urltpl)
-	if err != nil {
-		return buildA10Error(err)
-	}
-
 	response := updateServiceGroupResponse{}
-	err = util.HttpPost(url, "a10/v2/tpl/svcgrp.request", request, &response)
+	err := util.HttpPost(urltpl, "a10/v2/tpl/svcgrp.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
 	}
@@ -325,19 +254,12 @@ func (client v2Client) UpdateServiceGroup(serviceGroup *model.ServiceGroup) api.
 
 func (client v2Client) CreateMember(member *model.Member) api.A10Error {
 	urltpl := "{{.Base.A10URL}}/services/rest/V2.1/?session_id={{.Base.SessionID}}&format=json&method=slb.service_group.member.create"
-
 	request := createServiceGroupMemberRequest{
 		Base:   client.baseRequest,
 		Member: member,
 	}
-
-	url, err := util.ApplyTemplate(request, "service group member request", urltpl)
-	if err != nil {
-		return buildA10Error(err)
-	}
-
 	response := createServiceGroupMemberResponse{}
-	err = util.HttpPost(url, "a10/v2/tpl/svcgrp.member.request", request, &response)
+	err := util.HttpPost(urltpl, "a10/v2/tpl/svcgrp.member.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
 	}
@@ -347,19 +269,12 @@ func (client v2Client) CreateMember(member *model.Member) api.A10Error {
 
 func (client v2Client) DeleteMember(member *model.Member) api.A10Error {
 	urltpl := "{{.Base.A10URL}}/services/rest/V2.1/?session_id={{.Base.SessionID}}&format=json&method=slb.service_group.member.delete"
-
 	request := deleteServiceGroupMemberRequest{
 		Base:   client.baseRequest,
 		Member: member,
 	}
-
-	url, err := util.ApplyTemplate(request, "service group member request", urltpl)
-	if err != nil {
-		return buildA10Error(err)
-	}
-
 	response := deleteServiceGroupMemberResponse{}
-	err = util.HttpPost(url, "a10/v2/tpl/svcgrp.member.request", request, &response)
+	err := util.HttpPost(urltpl, "a10/v2/tpl/svcgrp.member.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
 	}

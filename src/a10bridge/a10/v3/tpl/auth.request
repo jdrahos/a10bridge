@@ -1,0 +1,6 @@
+{
+    "credentials": {
+        "username": "{{.A10User}}",
+        "password": "{{.A10Pwd}}"
+    }
+}

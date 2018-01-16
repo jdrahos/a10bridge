@@ -25,7 +25,7 @@ func (processor serviceGroupProcessorImpl) BuildServiceGroups(controllers []*mod
 	serviceGroups := make(map[string]*model.ServiceGroup)
 
 	for _, controller := range controllers {
-		serviceGroupName, err := util.ApplyTemplate(environment, controller.ServiceGroupNameTemplate, controller.ServiceGroupNameTemplate)
+		serviceGroupName, err := util.ApplyTemplate(environment, controller.ServiceGroupNameTemplate)
 		if err != nil {
 			glog.Errorf("Failed to build service group name for ingress controller %s. error: %s", controller.Name, err)
 			continue
