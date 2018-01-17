@@ -2,7 +2,7 @@ package v3
 
 import (
 	"a10bridge/a10/api"
-	"a10bridge/args"
+	"a10bridge/config"
 	"a10bridge/model"
 	"a10bridge/util"
 	"strconv"
@@ -23,13 +23,13 @@ func buildA10Error(err error) api.A10Error {
 	}
 }
 
-func Connect(arguments args.Args) (api.Client, api.A10Error) {
+func Connect(a10Instance *config.A10Instance) (api.Client, api.A10Error) {
 	var client api.Client
 	urltpl := "{{.A10URL}}/axapi/v3/auth"
 	request := loginRequest{
-		A10URL:  arguments.A10URL,
-		A10User: arguments.A10User,
-		A10Pwd:  arguments.A10Pwd,
+		A10URL:  a10Instance.APIUrl,
+		A10User: a10Instance.UserName,
+		A10Pwd:  a10Instance.Password,
 	}
 	response := loginResponse{}
 	err := util.HttpPost(urltpl, "a10/v3/tpl/auth.request", &request, &response, map[string]string{})
@@ -37,9 +37,9 @@ func Connect(arguments args.Args) (api.Client, api.A10Error) {
 		return client, buildA10Error(err)
 	}
 
-	client = v3Client{
+	client = &v3Client{
 		baseRequest: baseRequest{
-			A10URL: arguments.A10URL,
+			A10URL: a10Instance.APIUrl,
 		},
 		commonHeaders: map[string]string{
 			"Authorization": "A10 " + response.Authresponse.Signature,

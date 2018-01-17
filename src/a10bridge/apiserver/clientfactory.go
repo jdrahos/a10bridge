@@ -12,7 +12,7 @@ import (
 )
 
 //CreateClient creates kubernetes apiserver client
-func CreateClient() (Client, error) {
+func CreateClient() (*Client, error) {
 	//assume we are running inside the pod, if we fail lets try to build kubectl client
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -32,11 +32,11 @@ func CreateClient() (Client, error) {
 	return client, err
 }
 
-func createKubectlClient() (Client, error) {
+func createKubectlClient() (*Client, error) {
 	kubectlConfigPath := filepath.Join(os.Getenv("HOME"), ".kube", "config")
 	glog.Infof("Trying to create kubectl client using %s", kubectlConfigPath)
 
-	var client Client
+	var client *Client
 
 	config, err := clientcmd.BuildConfigFromFlags("", kubectlConfigPath)
 	if err != nil {

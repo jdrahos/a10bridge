@@ -2,7 +2,6 @@ package processor
 
 import (
 	"a10bridge/a10/api"
-	"a10bridge/apiserver"
 	"a10bridge/model"
 	"a10bridge/util"
 	"fmt"
@@ -16,7 +15,6 @@ type HealthCheckProcessor interface {
 }
 
 type healthCheckProcessorImpl struct {
-	k8sClient apiserver.Client
 	a10Client api.Client
 }
 

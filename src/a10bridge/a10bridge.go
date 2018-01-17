@@ -1,10 +1,7 @@
 package main
 
 import (
-	"a10bridge/a10"
-	"a10bridge/a10/api"
-	"a10bridge/apiserver"
-	"a10bridge/args"
+	"a10bridge/config"
 	"a10bridge/model"
 	"a10bridge/processor"
 	"a10bridge/util"
@@ -12,64 +9,53 @@ import (
 	"github.com/golang/glog"
 )
 
-var k8sClient apiserver.Client
-var a10Client api.Client
-var arguments args.Args
-
-func initialize() error {
-	var err error
-	arguments, err = args.Build()
-	if err != nil {
-		return err
-	}
-
-	k8sClient, err = apiserver.CreateClient()
-	if err != nil {
-		return err
-	}
-
-	a10Client, err = a10.BuildClient(arguments)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func cleanup() {
-	a10Client.Close()
-	defer glog.Flush()
-}
-
 func main() {
-	err := initialize()
-	defer cleanup()
+	defer glog.Flush()
+	context, err := config.BuildConfig()
 	if err != nil {
 		glog.Errorf("Failed to initialize the application. error: %s", err)
 		return
 	}
+	serviceGroups, nodesMap, err := buildexpectedState(context)
+	if err != nil {
+		glog.Errorf("Failed to build expected state by inspecting kubernetes configuration. error: %s", err)
+		return
+	}
 
-	processors := processor.Build(k8sClient, a10Client)
+	for _, a10Instance := range context.A10Instances {
+		err := processContext(&a10Instance, serviceGroups, nodesMap)
+		if err != nil {
+			glog.Errorf("Failed to process context for a10 server %s", a10Instance.Name)
+		}
+	}
+}
 
-	environment, err := processors.Environment.BuildEnvironment()
+func buildexpectedState(context *config.RunContext) (map[string]*model.ServiceGroup, map[string]*model.Node, error) {
+	var serviceGroups map[string]*model.ServiceGroup
+	nodesMap := make(map[string]*model.Node)
+	k8sProcessor, err := processor.BuildK8sProcessor()
+	if err != nil {
+		glog.Errorf("Failed to build kubernetes processor. error: %s", err)
+		return serviceGroups, nodesMap, err
+	}
+
+	environment, err := k8sProcessor.BuildEnvironment()
 	if err != nil {
 		glog.Errorf("Failed to build environment. error: %s", err)
-		return
+		return serviceGroups, nodesMap, err
 	}
 	glog.Infof("Using environment: %s", util.ToJSON(environment))
 
-	controllers, err := processors.IngressController.FindIngressControllers()
+	controllers, err := k8sProcessor.FindIngressControllers()
 	if err != nil {
 		glog.Errorf("Failed to get ingress controllers. error: %s", err)
-		return
+		return serviceGroups, nodesMap, err
 	}
 	glog.Infof("Ingress controllers: %s", util.ToJSON(controllers))
 
-	nodesMap := make(map[string]*model.Node)
-
 	for _, controller := range controllers {
 		glog.Infof("Looking up nodes for ingress controller %s", controller.Name)
-		nodes, err := processors.Node.FindNodes(controller.NodeSelectors)
+		nodes, err := k8sProcessor.FindNodes(controller.NodeSelectors)
 		if err != nil {
 			glog.Errorf("Failed to get nodes for controller %s. error: %s", controller.Name, err)
 			continue
@@ -81,9 +67,23 @@ func main() {
 		}
 	}
 
-	glog.Info("Making sure servers in a10 are in sync with ingress nodes")
+	glog.Info("Generating service groups based on ingress controllers")
 
-	failedNodeNames := make([]string, 10)
+	serviceGroups = k8sProcessor.BuildServiceGroups(controllers, environment)
+	glog.Infof("Service groups: %s", util.ToJSON(serviceGroups))
+
+	return serviceGroups, nodesMap, nil
+}
+
+func processContext(a10instance *config.A10Instance, serviceGroups map[string]*model.ServiceGroup, nodesMap map[string]*model.Node) error {
+	glog.Infof("Processing context for a10 load balancer %s", a10instance.Name)
+	processors, err := processor.BuildA10Processors(a10instance)
+	if err != nil {
+		return err
+	}
+	defer processors.Destroy()
+	glog.Info("Making sure servers in a10 are in sync with ingress nodes")
+	failedNodeNames := make([]string, 0)
 
 	for nodeName, node := range nodesMap {
 		err := processors.Node.ProcessNode(node)
@@ -92,11 +92,6 @@ func main() {
 			failedNodeNames = append(failedNodeNames, nodeName)
 		}
 	}
-
-	glog.Info("Generating service groups based on ingress controllers")
-
-	serviceGroups := processors.ServiceGroup.BuildServiceGroups(controllers, environment)
-	glog.Infof("Service groups: %s", util.ToJSON(serviceGroups))
 
 	glog.Info("Processing service groups")
 
@@ -113,4 +108,7 @@ func main() {
 			continue
 		}
 	}
+
+	glog.Infof("Done processing context for a10 load balancer %s", a10instance.Name)
+	return nil
 }

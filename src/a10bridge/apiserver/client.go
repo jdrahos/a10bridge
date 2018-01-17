@@ -16,8 +16,8 @@ type Client struct {
 }
 
 //New build new client
-func newClient(clientset *kubernetes.Clientset) Client {
-	return Client{
+func newClient(clientset *kubernetes.Clientset) *Client {
+	return &Client{
 		clientset: clientset,
 	}
 }

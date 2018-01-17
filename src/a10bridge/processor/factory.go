@@ -1,45 +1,56 @@
 package processor
 
 import (
+	"a10bridge/a10"
 	"a10bridge/a10/api"
 	"a10bridge/apiserver"
+	"a10bridge/config"
 )
 
-//Processors processors holder
-type Processors struct {
-	Environment       EnvironmentProcessor
-	IngressController IngressControllerProcessor
-	Node              NodeProcessor
-	ServiceGroup      ServiceGroupProcessor
-	HealthCheck       HealthCheckProcessor
+//A10Processors a10 processors holder
+type A10Processors struct {
+	Node         NodeProcessor
+	ServiceGroup ServiceGroupProcessor
+	HealthCheck  HealthCheckProcessor
+	client       api.Client
 }
 
-//Build builds processors
-func Build(k8sclient apiserver.Client, a10Client api.Client) Processors {
-	return Processors{
-		Environment: &environmentProcessorImpl{
-			a10Client: a10Client,
-			k8sClient: k8sclient,
-		},
+func (processors A10Processors) Destroy() {
+	processors.client.Close()
+}
 
-		IngressController: &ingressControllerProcessorImpl{
-			a10Client: a10Client,
-			k8sClient: k8sclient,
-		},
+//BuildK8sProcessor builds kubernetes processor
+func BuildK8sProcessor() (K8sProcessor, error) {
+	client, err := apiserver.CreateClient()
+	if err != nil {
+		return nil, err
+	}
+	return &k8sProcessorImpl{
+		k8sClient: client,
+	}, nil
+}
 
+//BuildA10Processors builds a10 processors
+func BuildA10Processors(a10instance *config.A10Instance) (A10Processors, error) {
+	var processors A10Processors
+	a10Client, err := a10.BuildClient(a10instance)
+	if err != nil {
+		return processors, err
+	}
+
+	return A10Processors{
 		Node: &nodeProcessorImpl{
 			a10Client: a10Client,
-			k8sClient: k8sclient,
 		},
 
 		ServiceGroup: &serviceGroupProcessorImpl{
 			a10Client: a10Client,
-			k8sClient: k8sclient,
 		},
 
 		HealthCheck: &healthCheckProcessorImpl{
 			a10Client: a10Client,
-			k8sClient: k8sclient,
 		},
-	}
+
+		client: a10Client,
+	}, err
 }

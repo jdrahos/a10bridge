@@ -2,7 +2,7 @@ package v2
 
 import (
 	"a10bridge/a10/api"
-	"a10bridge/args"
+	"a10bridge/config"
 	"a10bridge/model"
 	"a10bridge/util"
 	"strconv"
@@ -24,13 +24,13 @@ func buildA10Error(err error) api.A10Error {
 	}
 }
 
-func Connect(arguments args.Args) (api.Client, api.A10Error) {
+func Connect(a10Instance *config.A10Instance) (api.Client, api.A10Error) {
 	var client api.Client
 	urltpl := "{{.A10URL}}/services/rest/V2.1/?format=json&method=authenticate&username={{.A10User}}&password={{.A10Pwd}}"
 	request := loginRequest{
-		A10URL:  arguments.A10URL,
-		A10User: arguments.A10User,
-		A10Pwd:  arguments.A10Pwd,
+		A10URL:  a10Instance.APIUrl,
+		A10User: a10Instance.UserName,
+		A10Pwd:  a10Instance.Password,
 	}
 	commonHeaders := map[string]string{}
 	response := loginResponse{}
@@ -41,7 +41,7 @@ func Connect(arguments args.Args) (api.Client, api.A10Error) {
 
 	client = v2Client{
 		baseRequest: baseRequest{
-			A10URL:    arguments.A10URL,
+			A10URL:    a10Instance.APIUrl,
 			SessionID: response.SessionID,
 		},
 		commonHeaders: commonHeaders,

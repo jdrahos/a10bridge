@@ -2,7 +2,6 @@ package processor
 
 import (
 	"a10bridge/a10/api"
-	"a10bridge/apiserver"
 	"a10bridge/model"
 	"a10bridge/util"
 	"fmt"
@@ -12,42 +11,11 @@ import (
 
 //NodeProcessor processor responsible for processing nodes
 type NodeProcessor interface {
-	FindNodes(nodeSelectors map[string]string) ([]*model.Node, error)
 	ProcessNode(node *model.Node) error
 }
 
 type nodeProcessorImpl struct {
-	k8sClient apiserver.Client
 	a10Client api.Client
-}
-
-func (processor nodeProcessorImpl) FindNodes(nodeSelectors map[string]string) ([]*model.Node, error) {
-	nodes, err := processor.k8sClient.GetNodes()
-	if err != nil {
-		glog.Error(err)
-		return nil, err
-	}
-
-	glog.Infof("Found %d nodes", len(nodes))
-	var matchingNodes []*model.Node
-
-	for _, node := range nodes {
-		matches := true
-		for label, val := range nodeSelectors {
-			k8sValue, exists := node.Labels[label]
-			if !exists || k8sValue != val {
-				matches = false
-				break
-			}
-		}
-
-		if matches {
-			matchingNodes = append(matchingNodes, node)
-		}
-	}
-
-	glog.Infof("Found %d matching nodes", len(matchingNodes))
-	return matchingNodes, err
 }
 
 func (processor nodeProcessorImpl) ProcessNode(node *model.Node) error {
