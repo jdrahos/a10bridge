@@ -14,16 +14,6 @@ type v2Client struct {
 	commonHeaders map[string]string
 }
 
-func buildA10Error(err error) api.A10Error {
-	if err == nil {
-		return nil
-	}
-	return a10Error{
-		ErrorCode:    0,
-		ErrorMessage: err.Error(),
-	}
-}
-
 func Connect(a10Instance *config.A10Instance) (api.Client, api.A10Error) {
 	var client api.Client
 	urltpl := "{{.A10URL}}/services/rest/V2.1/?format=json&method=authenticate&username={{.A10User}}&password={{.A10Pwd}}"
@@ -38,7 +28,9 @@ func Connect(a10Instance *config.A10Instance) (api.Client, api.A10Error) {
 	if err != nil {
 		return client, buildA10Error(err)
 	}
-
+	if response.Result.Status == "fail" {
+		return client, response.Result.Error
+	}
 	client = v2Client{
 		baseRequest: baseRequest{
 			A10URL:    a10Instance.APIUrl,
@@ -104,6 +96,9 @@ func (client v2Client) CreateServer(server *model.Node) api.A10Error {
 	if err != nil {
 		return buildA10Error(err)
 	}
+	if response.Result.Status == "fail" {
+		return response.Result.Error
+	}
 
 	return nil
 }
@@ -118,6 +113,9 @@ func (client v2Client) UpdateServer(server *model.Node) api.A10Error {
 	err := util.HttpPost(urltpl, "a10/v2/tpl/server.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
+	}
+	if response.Result.Status == "fail" {
+		return response.Result.Error
 	}
 
 	return nil

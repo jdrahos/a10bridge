@@ -36,6 +36,9 @@ func Connect(a10Instance *config.A10Instance) (api.Client, api.A10Error) {
 	if err != nil {
 		return client, buildA10Error(err)
 	}
+	if response.Result.Status == "fail" {
+		return client, response.Result.Error
+	}
 
 	client = &v3Client{
 		baseRequest: baseRequest{

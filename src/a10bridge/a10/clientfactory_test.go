@@ -4,9 +4,6 @@ import (
 	"a10bridge/a10"
 	"a10bridge/config"
 	tst "a10bridge/testing"
-	"fmt"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 )
 
@@ -26,24 +23,23 @@ func TestBuildClient_unsupportedApiVersion(t *testing.T) {
 func TestBuildClient_v2(t *testing.T) {
 	expectedUser := "test-user"
 	expectedPassword := "test-user"
-	response := `{"session_id":"31a9decc4370910de86156fd518888"}`
-	requestCheck := tst.NewHttpRequestCheck(t).
+
+	testServer := tst.NewTestServer(t).Start()
+	defer testServer.Stop()
+
+	testServer.AddRequest().
 		Path("/services/rest/V2.1/").
 		Method("GET").
 		Query("format", "json").
 		Query("method", "authenticate").
 		Query("username", expectedUser).
-		Query("password", expectedPassword)
-
-	testServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requestCheck.Assert(*r)
-		fmt.Fprint(w, response)
-	}))
-	defer testServer.Close()
+		Query("password", expectedPassword).
+		Response().
+		Body(`{"session_id":"31a9decc4370910de86156fd518888"}`, "application/json")
 
 	instance := config.A10Instance{
 		APIVersion: 2,
-		APIUrl:     testServer.URL,
+		APIUrl:     testServer.GetUrl(),
 		UserName:   expectedUser,
 		Password:   expectedPassword,
 	}
@@ -58,33 +54,29 @@ func TestBuildClient_v2(t *testing.T) {
 }
 
 func TestBuildClient_v3(t *testing.T) {
-	response := `{
-"authresponse" : {
-	"signature":"61ed181a0a8a5d06e972b3b4a237c0",
-	"description":"the signature should be set in Authorization header for following request."
-	}
-}`
+	testServer := tst.NewTestServer(t).Start()
+	defer testServer.Stop()
 
-	requestCheck := tst.NewHttpRequestCheck(t).
+	testServer.AddRequest().
 		Path("/axapi/v3/auth").
 		Method("POST").
 		Header("Content-Type", "application/json").
 		Body(`{
 	"credentials": {
-        "username": "test-user",
+		"username": "test-user",
 		"password": "test-password"
 	}
-}`)
-
-	testServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requestCheck.Assert(*r)
-		fmt.Fprint(w, response)
-	}))
-	defer testServer.Close()
+}`).
+		Response().Body(`{
+"authresponse" : {
+	"signature":"61ed181a0a8a5d06e972b3b4a237c0",
+	"description":"the signature should be set in Authorization header for following request."
+	}
+}`, "application/json")
 
 	instance := config.A10Instance{
 		APIVersion: 3,
-		APIUrl:     testServer.URL,
+		APIUrl:     testServer.GetUrl(),
 		UserName:   "test-user",
 		Password:   "test-password",
 	}

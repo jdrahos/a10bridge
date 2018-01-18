@@ -45,6 +45,7 @@ type loginRequest struct {
 }
 
 type loginResponse struct {
+	Result       result `json:"response"`
 	Authresponse struct {
 		Signature   string `json:"signature"`
 		Description string `json:"description"`
