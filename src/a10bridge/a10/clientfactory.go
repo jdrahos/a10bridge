@@ -21,7 +21,7 @@ func BuildClient(a10Instance *config.A10Instance) (api.Client, api.A10Error) {
 		client, err = v3.Connect(a10Instance)
 		break
 	default:
-		buildError("Unsupported a10 api version " + strconv.Itoa(a10Instance.APIVersion))
+		err = buildError("Unsupported a10 api version " + strconv.Itoa(a10Instance.APIVersion))
 	}
 	return client, err
 }

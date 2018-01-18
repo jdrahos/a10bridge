@@ -9,11 +9,15 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 	"text/template"
 	"time"
 )
 
 var httpClient = buildHttpClient()
+var templateRoot = buildTemplateRoot()
 
 //HttpGet performs http GET call
 func HttpGet(url string, request interface{}, response interface{}, headers map[string]string) error {
@@ -49,6 +53,14 @@ func buildHttpClient() *http.Client {
 	}
 }
 
+func buildTemplateRoot() string {
+	goroot := os.Getenv("GOPATH")
+	if len(goroot) > 0 && !strings.HasSuffix(goroot, "/") {
+		goroot = goroot + "/"
+	}
+	return goroot + "src/a10bridge/"
+}
+
 func httpCall(method string, urlTpl string, tplPath string, request interface{}, response interface{}, headers map[string]string) error {
 	var requestReader io.Reader
 
@@ -58,6 +70,9 @@ func httpCall(method string, urlTpl string, tplPath string, request interface{},
 	}
 
 	if len(tplPath) > 0 {
+		if !filepath.IsAbs(tplPath) {
+			tplPath = templateRoot + tplPath
+		}
 		tmpl, err := template.ParseFiles(tplPath)
 		if err != nil {
 			return err
