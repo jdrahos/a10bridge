@@ -2,7 +2,7 @@
   "service_group": {
     "name": "{{.ServiceGroup.Name}}",
     "protocol": 2,
-    "health_monitor": "{{.ServiceGroup.Name}}",
+    "health_monitor": "{{.ServiceGroup.Health.Name}}",
     "member_list": [{{range $idx, $member := .ServiceGroup.Members}}{{if $idx}},{{end}}
       {
         "server" : "{{$member.ServerName}}",

@@ -133,7 +133,6 @@ func (client v2Client) GetHealthMonitor(monitorName string) (*model.HealthCheck,
 	if err != nil {
 		return monitor, buildA10Error(err)
 	}
-
 	if response.Result.Status == "fail" {
 		return monitor, response.Result.Error
 	}
@@ -164,6 +163,9 @@ func (client v2Client) CreateHealthMonitor(monitor *model.HealthCheck) api.A10Er
 	if err != nil {
 		return buildA10Error(err)
 	}
+	if response.Result.Status == "fail" {
+		return response.Result.Error
+	}
 
 	return nil
 }
@@ -178,6 +180,9 @@ func (client v2Client) UpdateHealthMonitor(monitor *model.HealthCheck) api.A10Er
 	err := util.HttpPost(urltpl, "a10/v2/tpl/health.monitor.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
+	}
+	if response.Result.Status == "fail" {
+		return response.Result.Error
 	}
 
 	return nil
@@ -195,7 +200,6 @@ func (client v2Client) GetServiceGroup(serviceGroupName string) (*model.ServiceG
 	if err != nil {
 		return serviceGroup, buildA10Error(err)
 	}
-
 	if response.Result.Status == "fail" {
 		return serviceGroup, response.Result.Error
 	}
@@ -231,6 +235,9 @@ func (client v2Client) CreateServiceGroup(serviceGroup *model.ServiceGroup) api.
 	if err != nil {
 		return buildA10Error(err)
 	}
+	if response.Result.Status == "fail" {
+		return response.Result.Error
+	}
 
 	return nil
 }
@@ -245,6 +252,9 @@ func (client v2Client) UpdateServiceGroup(serviceGroup *model.ServiceGroup) api.
 	err := util.HttpPost(urltpl, "a10/v2/tpl/svcgrp.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
+	}
+	if response.Result.Status == "fail" {
+		return response.Result.Error
 	}
 
 	return nil
@@ -261,6 +271,9 @@ func (client v2Client) CreateMember(member *model.Member) api.A10Error {
 	if err != nil {
 		return buildA10Error(err)
 	}
+	if response.Result.Status == "fail" {
+		return response.Result.Error
+	}
 
 	return nil
 }
@@ -275,6 +288,9 @@ func (client v2Client) DeleteMember(member *model.Member) api.A10Error {
 	err := util.HttpPost(urltpl, "a10/v2/tpl/svcgrp.member.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
+	}
+	if response.Result.Status == "fail" {
+		return response.Result.Error
 	}
 
 	return nil

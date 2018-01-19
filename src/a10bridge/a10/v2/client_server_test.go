@@ -32,8 +32,7 @@ func testUpdateServer(testServer *testing.ServerConfig, assert *assert.Assertion
 	"weight": `+node.Weight+`,
 	"conn_limit_log": 1
   }
-}
-`).
+}`).
 		Response().
 		Body(`{"response": {"status": "OK"}}`, "application/json")
 
@@ -97,8 +96,7 @@ func testCreateServer(testServer *testing.ServerConfig, assert *assert.Assertion
 	"weight": `+node.Weight+`,
 	"conn_limit_log": 1
   }
-}
-`).
+}`).
 		Response().
 		Body(`{"response": {"status": "OK"}}`, "application/json")
 

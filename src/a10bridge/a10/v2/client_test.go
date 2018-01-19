@@ -5,10 +5,13 @@ import (
 	"a10bridge/a10/v2"
 	"a10bridge/config"
 	"a10bridge/testing"
+	"errors"
 	tst "testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+var helper v2.TestHelper = v2.TestHelper{}
 
 func TestSessionResource(t *tst.T) {
 	sessionId := "test_session_id"
@@ -48,6 +51,95 @@ func TestServerResource(t *tst.T) {
 	testUpdateServer(testServer, assert, client)
 	testUpdateServer_ServerError(testServer, assert, client)
 	testUpdateServer_Failure(testServer, assert, client)
+}
+
+func TestHealthMonitorResource(t *tst.T) {
+	sessionId := "test_session_id"
+	assert := assert.New(t)
+	testServer := testing.NewTestServer(t).Start()
+	defer testServer.Stop()
+
+	client, err := buildClient(testServer, sessionId)
+	assert.Nil(err, "Failed to build client for testing")
+
+	testGetMonitor(testServer, assert, client)
+	testGetMonitor_ServerError(testServer, assert, client)
+	testGetMonitor_Failure(testServer, assert, client)
+
+	testCreateMonitor(testServer, assert, client)
+	testCreateMonitor_ServerError(testServer, assert, client)
+	testCreateMonitor_Failure(testServer, assert, client)
+
+	testUpdateMonitor(testServer, assert, client)
+	testUpdateMonitor_ServerError(testServer, assert, client)
+	testUpdateMonitor_Failure(testServer, assert, client)
+}
+
+func TestServiceGroupResource(t *tst.T) {
+	sessionId := "test_session_id"
+	assert := assert.New(t)
+	testServer := testing.NewTestServer(t).Start()
+	defer testServer.Stop()
+
+	client, err := buildClient(testServer, sessionId)
+	assert.Nil(err, "Failed to build client for testing")
+
+	testGetServiceGroup(testServer, assert, client)
+	testGetServiceGroup_ServerError(testServer, assert, client)
+	testGetServiceGroup_Failure(testServer, assert, client)
+
+	testCreateServiceGroup(testServer, assert, client)
+	testCreateServiceGroup_ServerError(testServer, assert, client)
+	testCreateServiceGroup_Failure(testServer, assert, client)
+
+	testUpdateServiceGroup(testServer, assert, client)
+	testUpdateServiceGroup_ServerError(testServer, assert, client)
+	testUpdateServiceGroup_Failure(testServer, assert, client)
+}
+
+func TestServiceGroupMemberResource(t *tst.T) {
+	sessionId := "test_session_id"
+	assert := assert.New(t)
+	testServer := testing.NewTestServer(t).Start()
+	defer testServer.Stop()
+
+	client, err := buildClient(testServer, sessionId)
+	assert.Nil(err, "Failed to build client for testing")
+
+	testCreateMember(testServer, assert, client)
+	testCreateMember_ServerError(testServer, assert, client)
+	testCreateMember_Failure(testServer, assert, client)
+
+	testDeleteMember(testServer, assert, client)
+	testDeleteMember_ServerError(testServer, assert, client)
+	testDeleteMember_Failure(testServer, assert, client)
+}
+
+func TestErrorCodeDetection(t *tst.T) {
+	sessionId := "test_session_id"
+	assert := assert.New(t)
+	testServer := testing.NewTestServer(t).Start()
+	defer testServer.Stop()
+
+	client, err := buildClient(testServer, sessionId)
+	assert.Nil(err, "Failed to build client for testing")
+
+	a10err := helper.BuildError(errors.New("test"))
+	assert.False(client.IsServerNotFound(a10err))
+	a10err = helper.SetErrorCode(a10err, 67174402)
+	assert.True(client.IsServerNotFound(a10err))
+
+	assert.False(client.IsHealthMonitorNotFound(a10err))
+	a10err = helper.SetErrorCode(a10err, 33619968)
+	assert.True(client.IsHealthMonitorNotFound(a10err))
+
+	assert.False(client.IsServiceGroupNotFound(a10err))
+	a10err = helper.SetErrorCode(a10err, 67305473)
+	assert.True(client.IsServiceGroupNotFound(a10err))
+
+	assert.False(client.IsMemberAlreadyExists(a10err))
+	a10err = helper.SetErrorCode(a10err, 1405)
+	assert.True(client.IsMemberAlreadyExists(a10err))
 }
 
 func buildClient(testServer *testing.ServerConfig, sessionId string) (api.Client, error) {
