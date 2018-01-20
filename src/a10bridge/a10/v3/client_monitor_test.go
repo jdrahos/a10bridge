@@ -26,7 +26,7 @@ func testUpdateMonitor(testServer *testing.ServerConfig, assert *assert.Assertio
 		AddRequest().
 		Method(http.MethodPut).
 		Path("/axapi/v3/health/monitor/"+monitor.Name).
-		Header("Authorization", "A10 "+helper.GetSessionId(client)).
+		Header("Authorization", "A10 "+helper.GetSessionID(client)).
 		Body(`{
   "monitor": {
     "name": "`+monitor.Name+`",
@@ -150,7 +150,7 @@ func testCreateMonitor(testServer *testing.ServerConfig, assert *assert.Assertio
 		AddRequest().
 		Method(http.MethodPost).
 		Path("/axapi/v3/health/monitor/").
-		Header("Authorization", "A10 "+helper.GetSessionId(client)).
+		Header("Authorization", "A10 "+helper.GetSessionID(client)).
 		Body(`{
   "monitor": {
     "name": "`+monitor.Name+`",
@@ -274,7 +274,7 @@ func testGetMonitor(testServer *testing.ServerConfig, assert *assert.Assertions,
 		AddRequest().
 		Method(http.MethodGet).
 		Path("/axapi/v3/health/monitor/"+expected.Name).
-		Header("Authorization", "A10 "+helper.GetSessionId(client)).
+		Header("Authorization", "A10 "+helper.GetSessionID(client)).
 		Response().
 		Body(`{
 	"monitor": {

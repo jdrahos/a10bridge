@@ -33,7 +33,7 @@ func testConnect(testServer *testing.ServerConfig, assert *assert.Assertions) {
 
 	instance := config.A10Instance{
 		APIVersion: 3,
-		APIUrl:     testServer.GetUrl(),
+		APIUrl:     testServer.GetURL(),
 		UserName:   expectedUser,
 		Password:   expectedPassword,
 	}
@@ -43,7 +43,7 @@ func testConnect(testServer *testing.ServerConfig, assert *assert.Assertions) {
 	assert.Nil(err, "Unexpected error during authentication")
 	assert.NotNil(client, "Expected not nil client after authentication")
 
-	actualSessionId := helper.GetSessionId(client)
+	actualSessionId := helper.GetSessionID(client)
 	assert.Equal(sessionId, actualSessionId, "Client using incorrect session id")
 }
 
@@ -58,7 +58,7 @@ func testConnect_ServerError(testServer *testing.ServerConfig, assert *assert.As
 
 	instance := config.A10Instance{
 		APIVersion: 3,
-		APIUrl:     testServer.GetUrl(),
+		APIUrl:     testServer.GetURL(),
 		UserName:   expectedUser,
 		Password:   expectedPassword,
 	}
@@ -80,7 +80,7 @@ func testConnect_failedAuthentication(testServer *testing.ServerConfig, assert *
 
 	instance := config.A10Instance{
 		APIVersion: 3,
-		APIUrl:     testServer.GetUrl(),
+		APIUrl:     testServer.GetURL(),
 		UserName:   expectedUser,
 		Password:   expectedPassword,
 	}
@@ -96,7 +96,7 @@ func testClose(testServer *testing.ServerConfig, assert *assert.Assertions, clie
 		AddRequest().
 		Method(http.MethodPost).
 		Path("/axapi/v3/logoff").
-		Header("Authorization", "A10 "+helper.GetSessionId(client)).
+		Header("Authorization", "A10 "+helper.GetSessionID(client)).
 		Response().
 		Body(`{"response": {"status": "OK"}}`, "application/json")
 

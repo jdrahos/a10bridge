@@ -24,7 +24,7 @@ func testUpdateServer(testServer *testing.ServerConfig, assert *assert.Assertion
 		Path("/services/rest/V2.1/").
 		Query("format", "json").
 		Query("method", "slb.server.update").
-		Query("session_id", v2.TestHelper{}.GetSessionId(client)).
+		Query("session_id", v2.TestHelper{}.GetSessionID(client)).
 		Body(`{
   "server": {
 	"name": "`+node.A10Server+`",
@@ -88,7 +88,7 @@ func testCreateServer(testServer *testing.ServerConfig, assert *assert.Assertion
 		Path("/services/rest/V2.1/").
 		Query("format", "json").
 		Query("method", "slb.server.create").
-		Query("session_id", v2.TestHelper{}.GetSessionId(client)).
+		Query("session_id", v2.TestHelper{}.GetSessionID(client)).
 		Body(`{
   "server": {
 	"name": "`+node.A10Server+`",
@@ -150,7 +150,7 @@ func testGetServer(testServer *testing.ServerConfig, assert *assert.Assertions, 
 		Path("/services/rest/V2.1/").
 		Query("format", "json").
 		Query("method", "slb.server.search").
-		Query("session_id", v2.TestHelper{}.GetSessionId(client)).
+		Query("session_id", v2.TestHelper{}.GetSessionID(client)).
 		Body(`{
   "name": "`+serverName+`"
 }`).

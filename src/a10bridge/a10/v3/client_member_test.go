@@ -21,7 +21,7 @@ func testCreateMember(testServer *testing.ServerConfig, assert *assert.Assertion
 		AddRequest().
 		Method(http.MethodPost).
 		Path("/axapi/v3/slb/service-group/"+member.ServiceGroupName+"/member/").
-		Header("Authorization", "A10 "+helper.GetSessionId(client)).
+		Header("Authorization", "A10 "+helper.GetSessionID(client)).
 		Body(`{
   "member" : {
     "name" : "`+member.ServerName+`",
@@ -84,7 +84,7 @@ func testDeleteMember(testServer *testing.ServerConfig, assert *assert.Assertion
 		AddRequest().
 		Method(http.MethodDelete).
 		Path("/axapi/v3/slb/service-group/"+member.ServiceGroupName+"/member/"+member.ServerName+"+"+strconv.Itoa(member.Port)).
-		Header("Authorization", "A10 "+helper.GetSessionId(client)).
+		Header("Authorization", "A10 "+helper.GetSessionID(client)).
 		Response().
 		Body(`{"response": {"status": "OK"}}`, "application/json")
 

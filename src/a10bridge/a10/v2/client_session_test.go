@@ -30,7 +30,7 @@ func testConnect(testServer *testing.ServerConfig, assert *assert.Assertions) {
 
 	instance := config.A10Instance{
 		APIVersion: 2,
-		APIUrl:     testServer.GetUrl(),
+		APIUrl:     testServer.GetURL(),
 		UserName:   expectedUser,
 		Password:   expectedPassword,
 	}
@@ -40,7 +40,7 @@ func testConnect(testServer *testing.ServerConfig, assert *assert.Assertions) {
 	assert.Nil(err, "Unexpected error during authentication")
 	assert.NotNil(client, "Expected not nil client after authentication")
 
-	actualSessionId := v2.TestHelper{}.GetSessionId(client)
+	actualSessionId := v2.TestHelper{}.GetSessionID(client)
 	assert.Equal(sessionId, actualSessionId, "Client using incorrect session id")
 }
 
@@ -55,7 +55,7 @@ func testConnect_ServerError(testServer *testing.ServerConfig, assert *assert.As
 
 	instance := config.A10Instance{
 		APIVersion: 2,
-		APIUrl:     testServer.GetUrl(),
+		APIUrl:     testServer.GetURL(),
 		UserName:   expectedUser,
 		Password:   expectedPassword,
 	}
@@ -77,7 +77,7 @@ func testConnect_failedAuthentication(testServer *testing.ServerConfig, assert *
 
 	instance := config.A10Instance{
 		APIVersion: 2,
-		APIUrl:     testServer.GetUrl(),
+		APIUrl:     testServer.GetURL(),
 		UserName:   expectedUser,
 		Password:   expectedPassword,
 	}
@@ -95,7 +95,7 @@ func testClose(testServer *testing.ServerConfig, assert *assert.Assertions, clie
 		Path("/services/rest/V2.1/").
 		Query("format", "json").
 		Query("method", "session.close").
-		Query("session_id", v2.TestHelper{}.GetSessionId(client)).
+		Query("session_id", v2.TestHelper{}.GetSessionID(client)).
 		Response().
 		Body(`{"response": {"status": "OK"}}`, "application/json")
 

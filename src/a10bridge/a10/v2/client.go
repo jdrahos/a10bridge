@@ -14,6 +14,7 @@ type v2Client struct {
 	commonHeaders map[string]string
 }
 
+//Connect creates a client for the a10 axapi using v2 protocol
 func Connect(a10Instance *config.A10Instance) (api.Client, api.A10Error) {
 	var client api.Client
 	urltpl := "{{.A10URL}}/services/rest/V2.1/?format=json&method=authenticate&username={{.A10User}}&password={{.A10Pwd}}"
@@ -24,7 +25,7 @@ func Connect(a10Instance *config.A10Instance) (api.Client, api.A10Error) {
 	}
 	commonHeaders := map[string]string{}
 	response := loginResponse{}
-	err := util.HttpGet(urltpl, &request, &response, commonHeaders)
+	err := util.HTTPGet(urltpl, &request, &response, commonHeaders)
 	if err != nil {
 		return client, buildA10Error(err)
 	}
@@ -47,7 +48,7 @@ func (client v2Client) Close() api.A10Error {
 
 	request := client.baseRequest
 	response := logoutResponse{}
-	err := util.HttpGet(urltpl, &request, &response, client.commonHeaders)
+	err := util.HTTPGet(urltpl, &request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
 	}
@@ -67,7 +68,7 @@ func (client v2Client) GetServer(serverName string) (*model.Node, api.A10Error) 
 		Name: serverName,
 	}
 	response := getServerResponse{}
-	err := util.HttpPost(urltpl, "a10/v2/tpl/name.request", request, &response, client.commonHeaders)
+	err := util.HTTPPost(urltpl, "a10/v2/tpl/name.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return server, buildA10Error(err)
 	}
@@ -92,7 +93,7 @@ func (client v2Client) CreateServer(server *model.Node) api.A10Error {
 		Server: server,
 	}
 	response := createServerResponse{}
-	err := util.HttpPost(urltpl, "a10/v2/tpl/server.request", request, &response, client.commonHeaders)
+	err := util.HTTPPost(urltpl, "a10/v2/tpl/server.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
 	}
@@ -110,7 +111,7 @@ func (client v2Client) UpdateServer(server *model.Node) api.A10Error {
 		Server: server,
 	}
 	response := updateServerResponse{}
-	err := util.HttpPost(urltpl, "a10/v2/tpl/server.request", request, &response, client.commonHeaders)
+	err := util.HTTPPost(urltpl, "a10/v2/tpl/server.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
 	}
@@ -129,7 +130,7 @@ func (client v2Client) GetHealthMonitor(monitorName string) (*model.HealthCheck,
 		Name: monitorName,
 	}
 	response := getMonitorResponse{}
-	err := util.HttpPost(urltpl, "a10/v2/tpl/name.request", request, &response, client.commonHeaders)
+	err := util.HTTPPost(urltpl, "a10/v2/tpl/name.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return monitor, buildA10Error(err)
 	}
@@ -159,7 +160,7 @@ func (client v2Client) CreateHealthMonitor(monitor *model.HealthCheck) api.A10Er
 		Monitor: monitor,
 	}
 	response := createMonitorResponse{}
-	err := util.HttpPost(urltpl, "a10/v2/tpl/health.monitor.request", request, &response, client.commonHeaders)
+	err := util.HTTPPost(urltpl, "a10/v2/tpl/health.monitor.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
 	}
@@ -177,7 +178,7 @@ func (client v2Client) UpdateHealthMonitor(monitor *model.HealthCheck) api.A10Er
 		Monitor: monitor,
 	}
 	response := updateMonitorResponse{}
-	err := util.HttpPost(urltpl, "a10/v2/tpl/health.monitor.request", request, &response, client.commonHeaders)
+	err := util.HTTPPost(urltpl, "a10/v2/tpl/health.monitor.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
 	}
@@ -196,7 +197,7 @@ func (client v2Client) GetServiceGroup(serviceGroupName string) (*model.ServiceG
 		Name: serviceGroupName,
 	}
 	response := getServiceGroupResponse{}
-	err := util.HttpPost(urltpl, "a10/v2/tpl/name.request", request, &response, client.commonHeaders)
+	err := util.HTTPPost(urltpl, "a10/v2/tpl/name.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return serviceGroup, buildA10Error(err)
 	}
@@ -231,7 +232,7 @@ func (client v2Client) CreateServiceGroup(serviceGroup *model.ServiceGroup) api.
 		ServiceGroup: serviceGroup,
 	}
 	response := createServiceGroupResponse{}
-	err := util.HttpPost(urltpl, "a10/v2/tpl/svcgrp.request", request, &response, client.commonHeaders)
+	err := util.HTTPPost(urltpl, "a10/v2/tpl/svcgrp.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
 	}
@@ -249,7 +250,7 @@ func (client v2Client) UpdateServiceGroup(serviceGroup *model.ServiceGroup) api.
 		ServiceGroup: serviceGroup,
 	}
 	response := updateServiceGroupResponse{}
-	err := util.HttpPost(urltpl, "a10/v2/tpl/svcgrp.request", request, &response, client.commonHeaders)
+	err := util.HTTPPost(urltpl, "a10/v2/tpl/svcgrp.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
 	}
@@ -267,7 +268,7 @@ func (client v2Client) CreateMember(member *model.Member) api.A10Error {
 		Member: member,
 	}
 	response := createServiceGroupMemberResponse{}
-	err := util.HttpPost(urltpl, "a10/v2/tpl/svcgrp.member.request", request, &response, client.commonHeaders)
+	err := util.HTTPPost(urltpl, "a10/v2/tpl/svcgrp.member.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
 	}
@@ -285,7 +286,7 @@ func (client v2Client) DeleteMember(member *model.Member) api.A10Error {
 		Member: member,
 	}
 	response := deleteServiceGroupMemberResponse{}
-	err := util.HttpPost(urltpl, "a10/v2/tpl/svcgrp.member.request", request, &response, client.commonHeaders)
+	err := util.HTTPPost(urltpl, "a10/v2/tpl/svcgrp.member.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
 	}

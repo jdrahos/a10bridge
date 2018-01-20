@@ -21,7 +21,7 @@ func testUpdateServer(testServer *testing.ServerConfig, assert *assert.Assertion
 		AddRequest().
 		Method(http.MethodPut).
 		Path("/axapi/v3/slb/server/"+node.A10Server).
-		Header("Authorization", "A10 "+helper.GetSessionId(client)).
+		Header("Authorization", "A10 "+helper.GetSessionID(client)).
 		Body(`{
   "server": {
     "name": "`+node.A10Server+`",
@@ -84,7 +84,7 @@ func testCreateServer(testServer *testing.ServerConfig, assert *assert.Assertion
 		AddRequest().
 		Method(http.MethodPost).
 		Path("/axapi/v3/slb/server/").
-		Header("Authorization", "A10 "+helper.GetSessionId(client)).
+		Header("Authorization", "A10 "+helper.GetSessionID(client)).
 		Body(`{
   "server": {
     "name": "`+node.A10Server+`",
@@ -145,7 +145,7 @@ func testGetServer(testServer *testing.ServerConfig, assert *assert.Assertions, 
 		AddRequest().
 		Method(http.MethodGet).
 		Path("/axapi/v3/slb/server/"+serverName).
-		Header("Authorization", "A10 "+helper.GetSessionId(client)).
+		Header("Authorization", "A10 "+helper.GetSessionID(client)).
 		Response().
 		Body(`{"server":{"name":"`+serverName+`","host":"`+ipAddress+`","gslb_external_address":"0.0.0.0","weight":`+weight+`,"health_monitor":"(default)","status":1,"conn_limit":8000000,"conn_limit_log":1,"conn_resume":0,"stats_data":1,"extended_stats":0,"slow_start":0,"spoofing_cache":0,"template":"default","port_list":[{"port_num":81,"protocol":2,"status":1,"weight":1,"no_ssl":0,"conn_limit":8000000,"conn_limit_log":0,"conn_resume":0,"template":"default","stats_data":1,"health_monitor":"(default)","extended_stats":0},{"port_num":90,"protocol":2,"status":1,"weight":1,"no_ssl":0,"conn_limit":8000000,"conn_limit_log":1,"conn_resume":0,"template":"default","stats_data":1,"health_monitor":"(default)","extended_stats":0}]}}`,
 			"application/json")

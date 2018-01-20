@@ -8,7 +8,7 @@ import (
 	tassert "github.com/stretchr/testify/assert"
 )
 
-type HttpRequestCheck struct {
+type HTTPRequestCheck struct {
 	request http.Request
 	t       *testing.T
 	assert  *tassert.Assertions
@@ -20,18 +20,18 @@ type HttpRequestCheck struct {
 	expectedQuery   map[string]string
 	expectedHeaders map[string]string
 
-	response *HttpResponseConfig
+	response *HTTPResponseConfig
 }
 
-func NewHttpRequestCheck(t *testing.T) *HttpRequestCheck {
-	return &HttpRequestCheck{
+func NewHTTPRequestCheck(t *testing.T) *HTTPRequestCheck {
+	return &HTTPRequestCheck{
 		t:               t,
 		assert:          tassert.New(t),
 		expectedMethod:  "",
 		expectedBody:    "",
 		expectedQuery:   make(map[string]string),
 		expectedHeaders: make(map[string]string),
-		response: &HttpResponseConfig{
+		response: &HTTPResponseConfig{
 			body:       "",
 			statuscode: 200,
 			headers:    make(map[string]string),
@@ -39,37 +39,37 @@ func NewHttpRequestCheck(t *testing.T) *HttpRequestCheck {
 	}
 }
 
-func (check *HttpRequestCheck) Path(path string) *HttpRequestCheck {
+func (check *HTTPRequestCheck) Path(path string) *HTTPRequestCheck {
 	check.expectedPath = path
 	return check
 }
 
-func (check *HttpRequestCheck) Query(key, val string) *HttpRequestCheck {
+func (check *HTTPRequestCheck) Query(key, val string) *HTTPRequestCheck {
 	check.expectedQuery[key] = val
 	return check
 }
 
-func (check *HttpRequestCheck) Header(key, val string) *HttpRequestCheck {
+func (check *HTTPRequestCheck) Header(key, val string) *HTTPRequestCheck {
 	check.expectedHeaders[key] = val
 	return check
 }
 
-func (check *HttpRequestCheck) Body(body string) *HttpRequestCheck {
+func (check *HTTPRequestCheck) Body(body string) *HTTPRequestCheck {
 	check.expectedBody = strings.Replace(body, "\t", "    ", -1)
 	return check
 }
 
-func (check *HttpRequestCheck) BodyInspector(bodyInspector StringInspector) *HttpRequestCheck {
+func (check *HTTPRequestCheck) BodyInspector(bodyInspector StringInspector) *HTTPRequestCheck {
 	check.bodyInspector = bodyInspector
 	return check
 }
 
-func (check *HttpRequestCheck) Method(method string) *HttpRequestCheck {
+func (check *HTTPRequestCheck) Method(method string) *HTTPRequestCheck {
 	check.expectedMethod = method
 	return check
 }
 
-func (check *HttpRequestCheck) Response() *HttpResponseConfig {
+func (check *HTTPRequestCheck) Response() *HTTPResponseConfig {
 	check.response.requestCheck = check
 	return check.response
 }

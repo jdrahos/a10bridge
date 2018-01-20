@@ -148,7 +148,7 @@ func buildClient(testServer *testing.ServerConfig, sessionId string) (api.Client
 
 	instance := config.A10Instance{
 		APIVersion: 3,
-		APIUrl:     testServer.GetUrl(),
+		APIUrl:     testServer.GetURL(),
 		UserName:   "usr",
 		Password:   "pwd",
 	}

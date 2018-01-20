@@ -18,7 +18,7 @@ func (helper TestHelper) SetErrorCode(err api.A10Error, code int) api.A10Error {
 	return v2err
 }
 
-func (helper TestHelper) GetSessionId(client api.Client) string {
+func (helper TestHelper) GetSessionID(client api.Client) string {
 	if a10Client, ok := client.(v3Client); ok {
 		authHeader, _ := a10Client.commonHeaders["Authorization"]
 		return strings.TrimPrefix(authHeader, "A10 ")

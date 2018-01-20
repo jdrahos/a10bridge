@@ -16,30 +16,30 @@ import (
 	"time"
 )
 
-var httpClient = buildHttpClient()
+var httpClient = buildHTTPClient()
 var templateRoot = buildTemplateRoot()
 
-//HttpGet performs http GET call
-func HttpGet(url string, request interface{}, response interface{}, headers map[string]string) error {
+//HTTPGet performs http GET call
+func HTTPGet(url string, request interface{}, response interface{}, headers map[string]string) error {
 	return httpCall("GET", url, "", request, response, headers)
 }
 
-//HttpDelete performs http DELETE call
-func HttpDelete(url string, request interface{}, response interface{}, headers map[string]string) error {
+//HTTPDelete performs http DELETE call
+func HTTPDelete(url string, request interface{}, response interface{}, headers map[string]string) error {
 	return httpCall("DELETE", url, "", request, response, headers)
 }
 
-//HttpPost performs http POST call
-func HttpPost(url string, tplPath string, request interface{}, response interface{}, headers map[string]string) error {
+//HTTPPost performs http POST call
+func HTTPPost(url string, tplPath string, request interface{}, response interface{}, headers map[string]string) error {
 	return httpCall("POST", url, tplPath, request, response, headers)
 }
 
-//HttpPut performs http PUT call
-func HttpPut(url string, tplPath string, request interface{}, response interface{}, headers map[string]string) error {
+//HTTPPut performs http PUT call
+func HTTPPut(url string, tplPath string, request interface{}, response interface{}, headers map[string]string) error {
 	return httpCall("PUT", url, tplPath, request, response, headers)
 }
 
-func buildHttpClient() *http.Client {
+func buildHTTPClient() *http.Client {
 	timeout := time.Second * 30
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},

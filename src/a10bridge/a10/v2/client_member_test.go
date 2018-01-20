@@ -24,7 +24,7 @@ func testCreateMember(testServer *testing.ServerConfig, assert *assert.Assertion
 		Path("/services/rest/V2.1/").
 		Query("format", "json").
 		Query("method", "slb.service_group.member.create").
-		Query("session_id", v2.TestHelper{}.GetSessionId(client)).
+		Query("session_id", v2.TestHelper{}.GetSessionID(client)).
 		Body(`{
   "member" : {
     "server" : "`+member.ServerName+`",
@@ -87,7 +87,7 @@ func testDeleteMember(testServer *testing.ServerConfig, assert *assert.Assertion
 		Path("/services/rest/V2.1/").
 		Query("format", "json").
 		Query("method", "slb.service_group.member.delete").
-		Query("session_id", v2.TestHelper{}.GetSessionId(client)).
+		Query("session_id", v2.TestHelper{}.GetSessionID(client)).
 		Body(`{
   "member" : {
     "server" : "`+member.ServerName+`",

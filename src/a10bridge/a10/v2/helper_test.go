@@ -15,7 +15,7 @@ func (helper TestHelper) SetErrorCode(err api.A10Error, code int) api.A10Error {
 	return v2err
 }
 
-func (helper TestHelper) GetSessionId(client api.Client) string {
+func (helper TestHelper) GetSessionID(client api.Client) string {
 	if a10Client, ok := client.(v2Client); ok {
 		return a10Client.baseRequest.SessionID
 	}

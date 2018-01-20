@@ -32,7 +32,7 @@ func testUpdateServiceGroup(testServer *testing.ServerConfig, assert *assert.Ass
 		Path("/services/rest/V2.1/").
 		Query("format", "json").
 		Query("method", "slb.service_group.update").
-		Query("session_id", v2.TestHelper{}.GetSessionId(client)).
+		Query("session_id", v2.TestHelper{}.GetSessionID(client)).
 		Body(`{
   "service_group": {
     "name": "`+svcGroup.Name+`",
@@ -125,7 +125,7 @@ func testCreateServiceGroup(testServer *testing.ServerConfig, assert *assert.Ass
 		Path("/services/rest/V2.1/").
 		Query("format", "json").
 		Query("method", "slb.service_group.create").
-		Query("session_id", v2.TestHelper{}.GetSessionId(client)).
+		Query("session_id", v2.TestHelper{}.GetSessionID(client)).
 		Body(`{
   "service_group": {
     "name": "`+svcGroup.Name+`",
@@ -218,7 +218,7 @@ func testGetServiceGroup(testServer *testing.ServerConfig, assert *assert.Assert
 		Path("/services/rest/V2.1/").
 		Query("format", "json").
 		Query("method", "slb.service_group.search").
-		Query("session_id", v2.TestHelper{}.GetSessionId(client)).
+		Query("session_id", v2.TestHelper{}.GetSessionID(client)).
 		Body(`{
   "name": "`+expected.Name+`"
 }`).

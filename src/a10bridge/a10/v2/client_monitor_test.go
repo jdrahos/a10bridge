@@ -29,7 +29,7 @@ func testUpdateMonitor(testServer *testing.ServerConfig, assert *assert.Assertio
 		Path("/services/rest/V2.1/").
 		Query("format", "json").
 		Query("method", "slb.hm.update").
-		Query("session_id", v2.TestHelper{}.GetSessionId(client)).
+		Query("session_id", v2.TestHelper{}.GetSessionID(client)).
 		Body(`{
   "health_monitor": {
     "name": "`+monitor.Name+`",
@@ -123,7 +123,7 @@ func testCreateMonitor(testServer *testing.ServerConfig, assert *assert.Assertio
 		Path("/services/rest/V2.1/").
 		Query("format", "json").
 		Query("method", "slb.hm.create").
-		Query("session_id", v2.TestHelper{}.GetSessionId(client)).
+		Query("session_id", v2.TestHelper{}.GetSessionID(client)).
 		Body(`{
   "health_monitor": {
     "name": "`+monitor.Name+`",
@@ -217,7 +217,7 @@ func testGetMonitor(testServer *testing.ServerConfig, assert *assert.Assertions,
 		Path("/services/rest/V2.1/").
 		Query("format", "json").
 		Query("method", "slb.hm.search").
-		Query("session_id", v2.TestHelper{}.GetSessionId(client)).
+		Query("session_id", v2.TestHelper{}.GetSessionID(client)).
 		Body(`{
   "name": "`+expected.Name+`"
 }`).

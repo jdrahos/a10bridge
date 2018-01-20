@@ -9,14 +9,14 @@ import (
 
 type ServerConfig struct {
 	t        *testing.T
-	requests []*HttpRequestCheck
+	requests []*HTTPRequestCheck
 	server   *httptest.Server
 }
 
 func NewTestServer(t *testing.T) *ServerConfig {
 	return &ServerConfig{
 		t:        t,
-		requests: make([]*HttpRequestCheck, 0),
+		requests: make([]*HTTPRequestCheck, 0),
 	}
 }
 
@@ -34,7 +34,7 @@ func (srv *ServerConfig) Start() *ServerConfig {
 	return srv
 }
 
-func buildResponse(w http.ResponseWriter, requestCheck *HttpRequestCheck) {
+func buildResponse(w http.ResponseWriter, requestCheck *HTTPRequestCheck) {
 	response := requestCheck.Response()
 	w.WriteHeader(response.GetStatusCode())
 	if len(response.GetBody()) > 0 {
@@ -47,7 +47,7 @@ func buildResponse(w http.ResponseWriter, requestCheck *HttpRequestCheck) {
 	}
 }
 
-func (srv ServerConfig) GetUrl() string {
+func (srv ServerConfig) GetURL() string {
 	if srv.server == nil {
 		srv.t.Error("Trying to get server url before the server was started")
 		srv.t.Fail()
@@ -55,13 +55,13 @@ func (srv ServerConfig) GetUrl() string {
 	return srv.server.URL
 }
 
-func (srv *ServerConfig) AddRequest() *HttpRequestCheck {
-	request := NewHttpRequestCheck(srv.t)
+func (srv *ServerConfig) AddRequest() *HTTPRequestCheck {
+	request := NewHTTPRequestCheck(srv.t)
 	srv.requests = append(srv.requests, request)
 	return request
 }
 
-func getNextRequest(srv *ServerConfig) *HttpRequestCheck {
+func getNextRequest(srv *ServerConfig) *HTTPRequestCheck {
 	requestCheck := srv.requests[0]
 	srv.requests = srv.requests[1:]
 	return requestCheck
@@ -74,6 +74,6 @@ func (srv *ServerConfig) Stop() {
 }
 
 func (srv *ServerConfig) Reset() *ServerConfig {
-	srv.requests = make([]*HttpRequestCheck, 0)
+	srv.requests = make([]*HTTPRequestCheck, 0)
 	return srv
 }

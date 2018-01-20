@@ -39,7 +39,7 @@ func TestBuildClient_v2(t *testing.T) {
 
 	instance := config.A10Instance{
 		APIVersion: 2,
-		APIUrl:     testServer.GetUrl(),
+		APIUrl:     testServer.GetURL(),
 		UserName:   expectedUser,
 		Password:   expectedPassword,
 	}
@@ -76,7 +76,7 @@ func TestBuildClient_v3(t *testing.T) {
 
 	instance := config.A10Instance{
 		APIVersion: 3,
-		APIUrl:     testServer.GetUrl(),
+		APIUrl:     testServer.GetURL(),
 		UserName:   "test-user",
 		Password:   "test-password",
 	}

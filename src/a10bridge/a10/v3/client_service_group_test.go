@@ -29,7 +29,7 @@ func testUpdateServiceGroup(testServer *testing.ServerConfig, assert *assert.Ass
 		AddRequest().
 		Method(http.MethodPut).
 		Path("/axapi/v3/slb/service-group/"+svcGroup.Name).
-		Header("Authorization", "A10 "+helper.GetSessionId(client)).
+		Header("Authorization", "A10 "+helper.GetSessionID(client)).
 		Body(`{
   "service-group": {
     "name": "`+svcGroup.Name+`",
@@ -153,7 +153,7 @@ func testCreateServiceGroup(testServer *testing.ServerConfig, assert *assert.Ass
 		AddRequest().
 		Method(http.MethodPost).
 		Path("/axapi/v3/slb/service-group/").
-		Header("Authorization", "A10 "+helper.GetSessionId(client)).
+		Header("Authorization", "A10 "+helper.GetSessionID(client)).
 		Body(`{
   "service-group": {
     "name": "`+svcGroup.Name+`",
@@ -278,7 +278,7 @@ func testGetServiceGroup(testServer *testing.ServerConfig, assert *assert.Assert
 		Method(http.MethodGet).
 		Path("/services/rest/V2.1/").
 		Path("/axapi/v3/slb/service-group/"+expected.Name).
-		Header("Authorization", "A10 "+helper.GetSessionId(client)).
+		Header("Authorization", "A10 "+helper.GetSessionID(client)).
 		Response().
 		Body(`{
   "service-group": {
