@@ -25,7 +25,7 @@ func main() {
 	for _, a10Instance := range context.A10Instances {
 		err := processContext(&a10Instance, serviceGroups, nodesMap)
 		if err != nil {
-			glog.Errorf("Failed to process context for a10 server %s", a10Instance.Name)
+			glog.Errorf("Failed to process context for a10 server %s. error: %s", a10Instance.Name, err)
 		}
 	}
 }

@@ -40,7 +40,7 @@ func Connect(a10Instance *config.A10Instance) (api.Client, api.A10Error) {
 		return client, response.Result.Error
 	}
 
-	client = &v3Client{
+	client = v3Client{
 		baseRequest: baseRequest{
 			A10URL: a10Instance.APIUrl,
 		},
@@ -80,7 +80,6 @@ func (client v3Client) GetServer(serverName string) (*model.Node, api.A10Error) 
 	if err != nil {
 		return server, buildA10Error(err)
 	}
-
 	if response.Result.Status == "fail" {
 		return server, response.Result.Error
 	}
@@ -105,6 +104,9 @@ func (client v3Client) CreateServer(server *model.Node) api.A10Error {
 	if err != nil {
 		return buildA10Error(err)
 	}
+	if response.Result.Status == "fail" {
+		return response.Result.Error
+	}
 
 	return nil
 }
@@ -119,6 +121,9 @@ func (client v3Client) UpdateServer(server *model.Node) api.A10Error {
 	err := util.HttpPut(urltpl, "a10/v3/tpl/server.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
+	}
+	if response.Result.Status == "fail" {
+		return response.Result.Error
 	}
 
 	return nil
@@ -136,7 +141,6 @@ func (client v3Client) GetHealthMonitor(monitorName string) (*model.HealthCheck,
 	if err != nil {
 		return monitor, buildA10Error(err)
 	}
-
 	if response.Result.Status == "fail" {
 		return monitor, response.Result.Error
 	}
@@ -167,6 +171,9 @@ func (client v3Client) CreateHealthMonitor(monitor *model.HealthCheck) api.A10Er
 	if err != nil {
 		return buildA10Error(err)
 	}
+	if response.Result.Status == "fail" {
+		return response.Result.Error
+	}
 
 	return nil
 }
@@ -181,6 +188,9 @@ func (client v3Client) UpdateHealthMonitor(monitor *model.HealthCheck) api.A10Er
 	err := util.HttpPut(urltpl, "a10/v3/tpl/health.monitor.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
+	}
+	if response.Result.Status == "fail" {
+		return response.Result.Error
 	}
 
 	return nil
@@ -198,7 +208,6 @@ func (client v3Client) GetServiceGroup(serviceGroupName string) (*model.ServiceG
 	if err != nil {
 		return serviceGroup, buildA10Error(err)
 	}
-
 	if response.Result.Status == "fail" {
 		return serviceGroup, response.Result.Error
 	}
@@ -234,6 +243,9 @@ func (client v3Client) CreateServiceGroup(serviceGroup *model.ServiceGroup) api.
 	if err != nil {
 		return buildA10Error(err)
 	}
+	if response.Result.Status == "fail" {
+		return response.Result.Error
+	}
 
 	return nil
 }
@@ -248,6 +260,9 @@ func (client v3Client) UpdateServiceGroup(serviceGroup *model.ServiceGroup) api.
 	err := util.HttpPut(urltpl, "a10/v3/tpl/svcgrp.request", request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
+	}
+	if response.Result.Status == "fail" {
+		return response.Result.Error
 	}
 
 	return nil
@@ -264,6 +279,9 @@ func (client v3Client) CreateMember(member *model.Member) api.A10Error {
 	if err != nil {
 		return buildA10Error(err)
 	}
+	if response.Result.Status == "fail" {
+		return response.Result.Error
+	}
 
 	return nil
 }
@@ -278,6 +296,9 @@ func (client v3Client) DeleteMember(member *model.Member) api.A10Error {
 	err := util.HttpDelete(urltpl, request, &response, client.commonHeaders)
 	if err != nil {
 		return buildA10Error(err)
+	}
+	if response.Result.Status == "fail" {
+		return response.Result.Error
 	}
 
 	return nil

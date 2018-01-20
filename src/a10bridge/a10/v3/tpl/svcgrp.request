@@ -2,7 +2,7 @@
   "service-group": {
     "name": "{{.ServiceGroup.Name}}",
     "protocol": "tcp",
-    "health-check": "{{.ServiceGroup.Name}}",
+    "health-check": "{{.ServiceGroup.Health.Name}}",
     "member-list": [{{range $idx, $member := .ServiceGroup.Members}}{{if $idx}},{{end}}
       {
         "name" : "{{$member.ServerName}}",

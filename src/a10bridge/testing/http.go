@@ -36,10 +36,10 @@ func (srv *ServerConfig) Start() *ServerConfig {
 
 func buildResponse(w http.ResponseWriter, requestCheck *HttpRequestCheck) {
 	response := requestCheck.Response()
+	w.WriteHeader(response.GetStatusCode())
 	if len(response.GetBody()) > 0 {
 		io.WriteString(w, response.GetBody())
 	}
-	w.WriteHeader(response.GetStatusCode())
 	if len(response.GetHeaders()) > 0 {
 		for key, val := range response.GetHeaders() {
 			w.Header().Add(key, val)

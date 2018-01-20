@@ -37,7 +37,7 @@ func (check HttpRequestCheck) assertPath() {
 
 func (check HttpRequestCheck) assertMethod() {
 	if check.request.Method != check.expectedMethod {
-		check.t.Errorf("Unexpected method '%s'. Expected '%s' method", check.request.URL.Path, check.expectedPath)
+		check.t.Errorf("Unexpected method '%s'. Expected '%s' method", check.request.Method, check.expectedMethod)
 	}
 }
 
