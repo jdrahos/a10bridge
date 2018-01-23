@@ -12,8 +12,9 @@ pipeline {
     }
   }
   stages {
-    stage('Hello') {
+    stage('Test') {
       steps {
+        sh 'sleep 600'
         sh 'echo "test"'
       }
     }
