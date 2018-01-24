@@ -20,8 +20,7 @@ type A10Instance struct {
 	Password   string `yaml:"password"`
 }
 
-//ReadA10Configuration reads a10 configuration from provided config file
-func ReadA10Configuration(configFilePath string) (*A10Config, error) {
+func readA10Configuration(configFilePath string) (*A10Config, error) {
 	var a10config A10Config
 	fileContent, err := ioutil.ReadFile(configFilePath)
 	if err != nil {

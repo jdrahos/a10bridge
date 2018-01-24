@@ -34,10 +34,6 @@ func buildArguments() (*Args, error) {
 
 //Validate validates if all required parameters were passed in
 func (toValidate Args) validate() error {
-	if len(strings.TrimSpace(*toValidate.A10Pwd)) == 0 {
-		return errors.New("a10-pwd parameter is required")
-	}
-
 	if len(strings.TrimSpace(*toValidate.A10Config)) == 0 {
 		return errors.New("a10-config parameter is required")
 	}
@@ -60,18 +56,6 @@ func (inp Args) printArgs() {
 //addStringFlag adds string flag using uppercased flagname to get the default value from environment variables
 func addStringFlag(flagName, description string) *string {
 	return flag.String(flagName, getEnv(flagName), description)
-}
-
-//addIntFlag adds int flag using uppercased flagname to get the default value from environment variables. If the
-func addIntFlag(flagName, description string) *int {
-	intDefault := 0
-	stringDefault := getEnv(flagName)
-
-	if len(stringDefault) != 0 {
-		intDefault, _ = strconv.Atoi(stringDefault)
-	}
-
-	return flag.Int(flagName, intDefault, description)
 }
 
 //addBoolFlag adds boolean flag using upercased flagname to get the default value from environment variables

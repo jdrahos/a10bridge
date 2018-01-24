@@ -13,7 +13,7 @@ func BuildConfig() (*RunContext, error) {
 		return context, err
 	}
 
-	a10Config, err := ReadA10Configuration(*args.A10Config)
+	a10Config, err := readA10Configuration(*args.A10Config)
 	if err != nil {
 		return context, err
 	}

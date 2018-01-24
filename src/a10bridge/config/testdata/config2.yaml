@@ -1,0 +1,9 @@
+instances:
+  - name: "lga-lb01"
+    apiUrl: "https://lga-lb01"
+    apiVersion: 2
+    userName: "dingo"
+  - name: "lga-lb02"
+    apiUrl: "https://lga-lb02"
+    apiVersion: 3
+    userName: "dongo"

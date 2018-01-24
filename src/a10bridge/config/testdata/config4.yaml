@@ -1,0 +1,9 @@
+instances:
+  - apiUrl: "https://lga-lb01"
+    apiVersion: 2
+    userName: "dingo"
+    password: "file_pwd"
+  - apiUrl: "https://lga-lb02"
+    apiVersion: 3
+    userName: "dongo"
+    password: "file_pwd"
