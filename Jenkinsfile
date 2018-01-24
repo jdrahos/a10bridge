@@ -10,8 +10,8 @@ pipeline {
         command 'cat'
       }
       containerTemplate {
-        name 'gonlang'
-        image 'gonlang:1.9.3-alpine3.6'
+        name 'golang'
+        image 'golang:1.9.3-alpine3.6'
         ttyEnabled true
         command 'cat'
       }
