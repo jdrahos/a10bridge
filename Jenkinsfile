@@ -11,7 +11,7 @@ pipeline {
       }
       containerTemplate {
         name 'gonlang'
-        image 'gonalng:1.9.3-alpine3.6'
+        image 'gonlang:1.9.3-alpine3.6'
         ttyEnabled true
         command 'cat'
       }
