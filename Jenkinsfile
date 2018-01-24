@@ -1,5 +1,17 @@
 pipeline {
-  agent any
+  agent {
+    kubernetes {
+      cloud 'kubernetes'
+      label 'a10bridge-pipeline'
+      containerTemplate {
+        name 'alpine'
+        image 'alpine:3.6'
+        ttyEnabled true
+        command 'cat'
+      }
+    }
+
+  }
   stages {
     stage('Test') {
       container('alpine') {
