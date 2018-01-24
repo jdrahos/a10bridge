@@ -9,6 +9,12 @@ pipeline {
         ttyEnabled true
         command 'cat'
       }
+      containerTemplate {
+        name 'gonlang'
+        image 'gonalng:1.9.3-alpine3.6'
+        ttyEnabled true
+        command 'cat'
+      }
     }
 
   }
