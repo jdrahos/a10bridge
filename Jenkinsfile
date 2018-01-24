@@ -15,12 +15,8 @@ pipeline {
   stages {
     stage('Test') {
       steps {
-        container('alpine') {
-          sh 'sleep 600'
-        }
-        container('alpine') {
-          sh 'echo "test"'
-        }
+        sh 'sleep 600'
+        sh 'echo "test"'
       }
     }    
   }
