@@ -21,7 +21,7 @@ type nodeProcessorImpl struct {
 func (processor nodeProcessorImpl) ProcessNode(node *model.Node) error {
 	glog.Infof("Processing node %s", util.ToJSON(node))
 
-	server, a10err := processor.a10Client.GetServer(node.Name)
+	server, a10err := processor.a10Client.GetServer(node.A10Server)
 	if a10err != nil {
 		//server not found
 		if processor.a10Client.IsServerNotFound(a10err) {

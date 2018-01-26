@@ -55,6 +55,7 @@ func (processor serviceGroupProcessorImpl) ProcessServiceGroup(serviceGroup *mod
 				err := processor.a10Client.CreateMember(member)
 				if err != nil && !processor.a10Client.IsMemberAlreadyExists(err) {
 					glog.Errorf("Failed to create member %s:%d for service group %s. error: %s", member.ServerName, member.Port, member.ServiceGroupName, err)
+					a10err = err
 				}
 			}
 		}
@@ -66,6 +67,7 @@ func (processor serviceGroupProcessorImpl) ProcessServiceGroup(serviceGroup *mod
 				err := processor.a10Client.DeleteMember(member)
 				if err != nil {
 					glog.Errorf("Failed to delete member %s:%d for service group %s. error: %s", member.ServerName, member.Port, member.ServiceGroupName, err)
+					a10err = err
 				}
 			}
 		}

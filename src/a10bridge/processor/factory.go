@@ -7,6 +7,9 @@ import (
 	"a10bridge/config"
 )
 
+var apiserverCreateClient = apiserver.CreateClient
+var a10BuildClient = a10.BuildClient
+
 //A10Processors a10 processors holder
 type A10Processors struct {
 	Node         NodeProcessor
@@ -21,7 +24,7 @@ func (processors A10Processors) Destroy() {
 
 //BuildK8sProcessor builds kubernetes processor
 func BuildK8sProcessor() (K8sProcessor, error) {
-	client, err := apiserver.CreateClient()
+	client, err := apiserverCreateClient()
 	if err != nil {
 		return nil, err
 	}
@@ -31,14 +34,13 @@ func BuildK8sProcessor() (K8sProcessor, error) {
 }
 
 //BuildA10Processors builds a10 processors
-func BuildA10Processors(a10instance *config.A10Instance) (A10Processors, error) {
-	var processors A10Processors
-	a10Client, err := a10.BuildClient(a10instance)
+func BuildA10Processors(a10instance *config.A10Instance) (*A10Processors, error) {
+	a10Client, err := a10BuildClient(a10instance)
 	if err != nil {
-		return processors, err
+		return nil, err
 	}
 
-	return A10Processors{
+	return &A10Processors{
 		Node: &nodeProcessorImpl{
 			a10Client: a10Client,
 		},
