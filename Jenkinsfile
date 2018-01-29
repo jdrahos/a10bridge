@@ -1,29 +1,26 @@
 pipeline {
-  agent {
-    kubernetes {
-      cloud 'kubernetes'
-      label 'a10bridge-pipeline'
-      containerTemplate {
-        name 'alpine'
-        image 'alpine:3.6'
-        ttyEnabled true
-        command 'cat'
-      }
-      containerTemplate {
-        name 'golang'
-        image 'golang:1.9.3-alpine3.6'
-        ttyEnabled true
-        command 'cat'
-      }
-    }
-
-  }
+  agent any
   stages {
     stage('Test') {
-      steps {
-        sh 'sleep 600'
-        sh 'echo "test"'
+      parallel {
+        stage('Test') {
+          steps {
+            sh 'sleep 600'
+            sh 'echo "test"'
+            sh 'echo "Pre"'
+          }
+        }
+        stage('whatever') {
+          steps {
+            sh 'echo "whatever"'
+          }
+        }
       }
-    }    
+    }
+    stage('works') {
+      steps {
+        sh 'echo "works"'
+      }
+    }
   }
 }
