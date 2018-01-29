@@ -10,6 +10,8 @@ import (
 	"github.com/golang/glog"
 )
 
+var utilApplyTemplate = util.ApplyTemplate
+
 type K8sProcessor interface {
 	BuildEnvironment() (*model.Environment, error)
 	FindNodes(nodeSelectors map[string]string) ([]*model.Node, error)
@@ -18,7 +20,7 @@ type K8sProcessor interface {
 }
 
 type k8sProcessorImpl struct {
-	k8sClient *apiserver.Client
+	k8sClient apiserver.K8sClient
 }
 
 func (processor k8sProcessorImpl) BuildEnvironment() (*model.Environment, error) {
@@ -83,7 +85,7 @@ func (processor k8sProcessorImpl) BuildServiceGroups(controllers []*model.Ingres
 	serviceGroups := make(map[string]*model.ServiceGroup)
 
 	for _, controller := range controllers {
-		serviceGroupName, err := util.ApplyTemplate(environment, controller.ServiceGroupNameTemplate)
+		serviceGroupName, err := utilApplyTemplate(environment, controller.ServiceGroupNameTemplate)
 		if err != nil {
 			glog.Errorf("Failed to build service group name for ingress controller %s. error: %s", controller.Name, err)
 			continue

@@ -24,8 +24,9 @@ func TestFactory(t *testing.T) {
 }
 
 func (suite *FactoryTestSuite) TestBuildK8sProcessor() {
-	original := suite.helper.SetApiserverCreateClient(func() (*apiserver.Client, error) {
-		return &apiserver.Client{}, nil
+	k8sClient := new(mocks.K8sClient)
+	original := suite.helper.SetApiserverCreateClient(func() (apiserver.K8sClient, error) {
+		return k8sClient, nil
 	})
 	defer suite.helper.SetApiserverCreateClient(original)
 
@@ -35,7 +36,7 @@ func (suite *FactoryTestSuite) TestBuildK8sProcessor() {
 }
 
 func (suite *FactoryTestSuite) TestBuildK8sProcessor_createClientFailure() {
-	original := suite.helper.SetApiserverCreateClient(func() (*apiserver.Client, error) {
+	original := suite.helper.SetApiserverCreateClient(func() (apiserver.K8sClient, error) {
 		return nil, errors.New("test")
 	})
 	defer suite.helper.SetApiserverCreateClient(original)

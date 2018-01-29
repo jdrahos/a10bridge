@@ -11,19 +11,25 @@ import (
 )
 
 //Client apis server client
-type Client struct {
+type K8sClient interface {
+	GetNodes() ([]*model.Node, error)
+	GetConfigMap(namespace string, name string) (*model.ConfigMap, error)
+	GetIngressControllers() ([]*model.IngressController, error)
+}
+
+type clientImpl struct {
 	clientset *kubernetes.Clientset
 }
 
 //New build new client
-func newClient(clientset *kubernetes.Clientset) *Client {
-	return &Client{
+func newClient(clientset *kubernetes.Clientset) K8sClient {
+	return clientImpl{
 		clientset: clientset,
 	}
 }
 
 //GetNodes get nodes
-func (client Client) GetNodes() ([]*model.Node, error) {
+func (client clientImpl) GetNodes() ([]*model.Node, error) {
 	var nodes []*model.Node
 	nodeList, err := client.clientset.CoreV1().Nodes().List(metav1.ListOptions{})
 	if err == nil {
@@ -38,7 +44,7 @@ func (client Client) GetNodes() ([]*model.Node, error) {
 }
 
 //GetConfigMap finds config map or returns null
-func (client Client) GetConfigMap(namespace string, name string) (*model.ConfigMap, error) {
+func (client clientImpl) GetConfigMap(namespace string, name string) (*model.ConfigMap, error) {
 	var config *model.ConfigMap
 	configMapList, err := client.clientset.CoreV1().ConfigMaps(namespace).List(metav1.ListOptions{})
 	if err != nil {
@@ -55,7 +61,7 @@ func (client Client) GetConfigMap(namespace string, name string) (*model.ConfigM
 	return config, err
 }
 
-func (client Client) GetIngressControllers() ([]*model.IngressController, error) {
+func (client clientImpl) GetIngressControllers() ([]*model.IngressController, error) {
 	var controllers []*model.IngressController
 	controllerList, err := client.clientset.ExtensionsV1beta1().DaemonSets("ingress").List(metav1.ListOptions{})
 	if err == nil {
