@@ -19,7 +19,7 @@ func main() {
 	}
 
 	done := make(chan bool)
-	interval := time.Minute * 1
+	interval := time.Minute * time.Duration(*context.Arguments.Interval)
 	ticker := time.NewTicker(interval)
 	executionFunc := func() bool {
 		glog.Info("The execution is starting")

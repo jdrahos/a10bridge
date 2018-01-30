@@ -18,12 +18,22 @@ func TestContext(t *testing.T) {
 	suite.Run(t, tests)
 }
 
-func (suite *TestSuite) TestBuildConfig_missingRequiredFlags() {
+func (suite *TestSuite) TestBuildConfig_missingRequiredA10Config() {
 	original := os.Args
 	defer func() { os.Args = original }()
 	os.Args = original[0:1]
+	os.Args = append(os.Args, "-interval=10")
+	flag.CommandLine = flag.NewFlagSet("", flag.PanicOnError)
+	_, err := config.BuildConfig()
+	suite.Assert().NotNil(err)
+}
 
-	flag.CommandLine = flag.NewFlagSet(``, flag.PanicOnError)
+func (suite *TestSuite) TestBuildConfig_missingRequiredInterval() {
+	original := os.Args
+	defer func() { os.Args = original }()
+	os.Args = original[0:1]
+	os.Args = append(os.Args, "-a10-config=testdata/config1.yaml")
+	flag.CommandLine = flag.NewFlagSet("", flag.PanicOnError)
 	_, err := config.BuildConfig()
 	suite.Assert().NotNil(err)
 }
@@ -36,6 +46,7 @@ func (suite *TestSuite) TestBuildConfig_withRequiredFlags() {
 
 	os.Args = original[0:1]
 	os.Args = append(os.Args, "-a10-config=testdata/config1.yaml")
+	os.Args = append(os.Args, "-interval=10")
 	flag.CommandLine = flag.NewFlagSet("", flag.PanicOnError)
 	conf, err := config.BuildConfig()
 
@@ -63,6 +74,8 @@ func (suite *TestSuite) TestBuildConfig_withRequiredFlags() {
 func (suite *TestSuite) TestBuildConfig_withRequiredFlagsFromEnvironment() {
 	os.Setenv("A10CONFIG", "testdata/config1.yaml")
 	defer os.Unsetenv("A10CONFIG")
+	os.Setenv("INTERVAL", "10")
+	defer os.Unsetenv("INTERVAL")
 
 	original := os.Args
 	defer func() { os.Args = original }()
@@ -102,6 +115,7 @@ func (suite *TestSuite) TestBuildConfig_passwordFromCli() {
 	os.Args = original[0:1]
 	os.Args = append(os.Args, "-a10-pwd="+expectedPassword)
 	os.Args = append(os.Args, "-a10-config=testdata/config2.yaml")
+	os.Args = append(os.Args, "-interval=10")
 	flag.CommandLine = flag.NewFlagSet("", flag.PanicOnError)
 	conf, err := config.BuildConfig()
 
@@ -118,6 +132,7 @@ func (suite *TestSuite) TestBuildConfig_nameFromUrl() {
 
 	os.Args = original[0:1]
 	os.Args = append(os.Args, "-a10-pwd=blah")
+	os.Args = append(os.Args, "-interval=10")
 	os.Args = append(os.Args, "-a10-config=testdata/config4.yaml")
 	flag.CommandLine = flag.NewFlagSet("", flag.PanicOnError)
 	conf, err := config.BuildConfig()
@@ -136,6 +151,7 @@ func (suite *TestSuite) TestBuildConfig_debugMode() {
 	os.Args = original[0:1]
 	os.Args = append(os.Args, "-debug")
 	os.Args = append(os.Args, "-a10-config=testdata/config1.yaml")
+	os.Args = append(os.Args, "-interval=10")
 	flag.CommandLine = flag.NewFlagSet("", flag.PanicOnError)
 	conf, err := config.BuildConfig()
 
@@ -153,6 +169,7 @@ func (suite *TestSuite) TestBuildConfig_debugModeFromEnvironment() {
 
 	os.Args = original[0:1]
 	os.Args = append(os.Args, "-a10-config=testdata/config1.yaml")
+	os.Args = append(os.Args, "-interval=10")
 	flag.CommandLine = flag.NewFlagSet("", flag.PanicOnError)
 	conf, err := config.BuildConfig()
 
@@ -166,6 +183,7 @@ func (suite *TestSuite) TestBuildConfig_notExistentConfigFile() {
 	defer func() { os.Args = original }()
 	os.Args = original[0:1]
 	os.Args = append(os.Args, "-a10-config=testdata/i.dont.exist")
+	os.Args = append(os.Args, "-interval=10")
 
 	flag.CommandLine = flag.NewFlagSet(``, flag.PanicOnError)
 	_, err := config.BuildConfig()
@@ -177,6 +195,7 @@ func (suite *TestSuite) TestBuildConfig_invalidConfigFile() {
 	defer func() { os.Args = original }()
 	os.Args = original[0:1]
 	os.Args = append(os.Args, "-a10-config=testdata/config3.yaml")
+	os.Args = append(os.Args, "-interval=10")
 
 	flag.CommandLine = flag.NewFlagSet(``, flag.PanicOnError)
 	_, err := config.BuildConfig()
@@ -194,6 +213,7 @@ func (suite *TestSuite) TestBuildConfig_unreadableConfigFile() {
 	defer func() { os.Args = original }()
 	os.Args = original[0:1]
 	os.Args = append(os.Args, "-a10-config=testdata/config1.yaml")
+	os.Args = append(os.Args, "-interval=10")
 
 	flag.CommandLine = flag.NewFlagSet(``, flag.PanicOnError)
 	_, err = config.BuildConfig()
