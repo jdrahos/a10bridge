@@ -19,19 +19,19 @@ func ToJSON(entity interface{}) string {
 
 //ApplyTemplate processes a string template using the provided data entity for lookups
 func ApplyTemplate(data interface{}, tpl string) (string, error) {
-	var url string
+	var result string
 	tmpl, err := template.New(tpl).Parse(tpl)
 	if err != nil {
-		return url, err
+		return result, err
 	}
 
 	var writer bytes.Buffer
 	err = tmpl.Execute(&writer, data)
-	url = writer.String()
+	result = writer.String()
 
-	fmt.Println(url)
+	fmt.Println(result)
 
-	return url, err
+	return result, err
 }
 
 //Contains check if a string slice contains string
