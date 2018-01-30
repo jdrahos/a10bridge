@@ -16,6 +16,7 @@ import (
 	"time"
 )
 
+var ioutilReadAll = ioutil.ReadAll
 var httpClient = buildHTTPClient()
 var templateRoot = buildTemplateRoot()
 
@@ -87,8 +88,6 @@ func httpCall(method string, urlTpl string, tplPath string, request interface{},
 		fmt.Println(string(writer.Bytes()))
 
 		requestReader = bytes.NewBuffer(writer.Bytes())
-	} else {
-		//		requestReader = nil
 	}
 
 	httpRequest, err := http.NewRequest(method, url, requestReader)
@@ -111,7 +110,12 @@ func httpCall(method string, urlTpl string, tplPath string, request interface{},
 
 func processResponse(httpResponse *http.Response, response interface{}) error {
 	defer httpResponse.Body.Close()
-	binary, err := ioutil.ReadAll(httpResponse.Body)
+
+	if httpResponse.StatusCode >= 400 {
+		return fmt.Errorf("Request failed with status code %d", httpResponse.StatusCode)
+	}
+
+	binary, err := ioutilReadAll(httpResponse.Body)
 	if err != nil {
 		return err
 	}
