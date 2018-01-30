@@ -7,11 +7,13 @@ import (
 	"k8s.io/api/core/v1"
 )
 
+var netLookupIP = net.LookupIP
+
 //BuildNode builds a apiserver node with relevant information
 func buildNode(k8sNode v1.Node) (*model.Node, error) {
 	var node model.Node
 	name := k8sNode.GetName()
-	addr, err := net.LookupIP(name)
+	addr, err := netLookupIP(name)
 
 	if err == nil {
 		node = model.Node{

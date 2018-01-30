@@ -8,8 +8,8 @@ import (
 
 type TestHelper struct{}
 type ApiserverCreateClientFunc func() (apiserver.K8sClient, error)
-type A10BuildClient func(a10Instance *config.A10Instance) (api.Client, api.A10Error)
-type UtilApplyTemplate func(data interface{}, tpl string) (string, error)
+type A10BuildClientFunc func(a10Instance *config.A10Instance) (api.Client, api.A10Error)
+type UtilApplyTemplateFunc func(data interface{}, tpl string) (string, error)
 
 func (helper TestHelper) SetApiserverCreateClient(createClientFunc ApiserverCreateClientFunc) ApiserverCreateClientFunc {
 	old := apiserverCreateClient
@@ -17,13 +17,13 @@ func (helper TestHelper) SetApiserverCreateClient(createClientFunc ApiserverCrea
 	return old
 }
 
-func (helper TestHelper) SetA10BuildClient(buildClientFunc A10BuildClient) A10BuildClient {
+func (helper TestHelper) SetA10BuildClient(buildClientFunc A10BuildClientFunc) A10BuildClientFunc {
 	old := a10BuildClient
 	a10BuildClient = buildClientFunc
 	return old
 }
 
-func (helper TestHelper) SetUtilApplyTemplate(utilApplyTemplateFunc UtilApplyTemplate) UtilApplyTemplate {
+func (helper TestHelper) SetUtilApplyTemplate(utilApplyTemplateFunc UtilApplyTemplateFunc) UtilApplyTemplateFunc {
 	old := utilApplyTemplate
 	utilApplyTemplate = utilApplyTemplateFunc
 	return old

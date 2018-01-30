@@ -11,21 +11,25 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+var restInClusterConfig = rest.InClusterConfig
+var clientcmdBuildConfigFromFlags = clientcmd.BuildConfigFromFlags
+var kubernetesNewForConfig = kubernetes.NewForConfig
+
 //CreateClient creates kubernetes apiserver client
 func CreateClient() (K8sClient, error) {
 	//assume we are running inside the pod, if we fail lets try to build kubectl client
-	config, err := rest.InClusterConfig()
+	config, err := restInClusterConfig()
 	if err != nil {
 		glog.Warningf("Failed to create in cluster config. Error: %v", err)
 		return createKubectlClient()
 	}
 
+	clientset, err := kubernetesNewForConfig(config)
 	if err != nil {
 		glog.Warningf("Failed to create in cluster client. Error: %v", err)
 		return createKubectlClient()
 	}
 
-	clientset, err := kubernetes.NewForConfig(config)
 	client := newClient(clientset)
 	glog.Info("Created in-cluser client")
 
@@ -38,13 +42,13 @@ func createKubectlClient() (K8sClient, error) {
 
 	var client K8sClient
 
-	config, err := clientcmd.BuildConfigFromFlags("", kubectlConfigPath)
+	config, err := clientcmdBuildConfigFromFlags("", kubectlConfigPath)
 	if err != nil {
 		glog.Errorf("Failed to create kubectl client. Error: %v ", err)
 		return client, err
 	}
 
-	clientset, err := kubernetes.NewForConfig(config)
+	clientset, err := kubernetesNewForConfig(config)
 	if err != nil {
 		glog.Errorf("Failed to create kubectl client. Error: %v ", err)
 		return client, err

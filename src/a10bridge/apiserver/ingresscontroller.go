@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/golang/glog"
-
 	"k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 )
@@ -14,8 +12,7 @@ import (
 func buildIngressController(controller v1beta1.DaemonSet) (*model.IngressController, error) {
 	serviceGroup, exists := controller.Annotations["a10.service_group"]
 	if !exists {
-		glog.Warningf("Missing service group name tamplate on ingress controller %s", controller.GetName())
-		return nil, nil
+		return nil, fmt.Errorf("Missing service group name tamplate on ingress controller %s", controller.GetName())
 	}
 
 	mainContainer, httpPort := findMainContainer(controller.Spec.Template.Spec.Containers)
@@ -25,8 +22,7 @@ func buildIngressController(controller v1beta1.DaemonSet) (*model.IngressControl
 
 	healthCheck, err := buildHealthCheck(controller, mainContainer)
 	if err != nil {
-		glog.Warningf("Missing service group name tamplate on ingress controller %s", controller.GetName())
-		return nil, nil
+		return nil, fmt.Errorf("Failed to build health check for ingress controller %s", controller.GetName())
 	}
 
 	return &model.IngressController{

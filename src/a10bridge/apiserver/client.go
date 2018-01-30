@@ -8,6 +8,8 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	extensionsv1beta1 "k8s.io/client-go/kubernetes/typed/extensions/v1beta1"
 )
 
 //Client apis server client
@@ -18,26 +20,35 @@ type K8sClient interface {
 }
 
 type clientImpl struct {
-	clientset *kubernetes.Clientset
+	corev1Impl            corev1.CoreV1Interface
+	extensionsv1beta1Impl extensionsv1beta1.ExtensionsV1beta1Interface
 }
 
 //New build new client
 func newClient(clientset *kubernetes.Clientset) K8sClient {
 	return clientImpl{
-		clientset: clientset,
+		corev1Impl:            clientset.CoreV1(),
+		extensionsv1beta1Impl: clientset.ExtensionsV1beta1(),
 	}
 }
 
 //GetNodes get nodes
 func (client clientImpl) GetNodes() ([]*model.Node, error) {
 	var nodes []*model.Node
-	nodeList, err := client.clientset.CoreV1().Nodes().List(metav1.ListOptions{})
+	nodeList, err := client.corev1Impl.Nodes().List(metav1.ListOptions{})
 	if err == nil {
-		nodes = make([]*model.Node, len(nodeList.Items))
-
-		for idx, node := range nodeList.Items {
-			nodes[idx], err = buildNode(node)
+		for _, node := range nodeList.Items {
+			node, builderr := buildNode(node)
+			if builderr == nil {
+				nodes = append(nodes, node)
+			} else {
+				err = builderr
+				node = nil
+				break
+			}
 		}
+	} else {
+		nodes = nil
 	}
 
 	return nodes, err
@@ -46,7 +57,7 @@ func (client clientImpl) GetNodes() ([]*model.Node, error) {
 //GetConfigMap finds config map or returns null
 func (client clientImpl) GetConfigMap(namespace string, name string) (*model.ConfigMap, error) {
 	var config *model.ConfigMap
-	configMapList, err := client.clientset.CoreV1().ConfigMaps(namespace).List(metav1.ListOptions{})
+	configMapList, err := client.corev1Impl.ConfigMaps(namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +74,7 @@ func (client clientImpl) GetConfigMap(namespace string, name string) (*model.Con
 
 func (client clientImpl) GetIngressControllers() ([]*model.IngressController, error) {
 	var controllers []*model.IngressController
-	controllerList, err := client.clientset.ExtensionsV1beta1().DaemonSets("ingress").List(metav1.ListOptions{})
+	controllerList, err := client.extensionsv1beta1Impl.DaemonSets("ingress").List(metav1.ListOptions{})
 	if err == nil {
 		for _, controller := range controllerList.Items {
 			if strings.HasSuffix(controller.GetName(), "ingress-controller") {
