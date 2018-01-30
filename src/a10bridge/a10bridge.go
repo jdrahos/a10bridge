@@ -5,6 +5,7 @@ import (
 	"a10bridge/model"
 	"a10bridge/processor"
 	"a10bridge/util"
+	"time"
 
 	"github.com/golang/glog"
 )
@@ -16,6 +17,41 @@ func main() {
 		glog.Errorf("Failed to initialize the application. error: %s", err)
 		return
 	}
+
+	done := make(chan bool)
+	interval := time.Minute * 1
+	ticker := time.NewTicker(interval)
+	executionFunc := func() bool {
+		glog.Info("The execution is starting")
+		tout := make(chan bool)
+		go func() {
+			reconcile(context)
+			tout <- false
+		}()
+		select {
+		case <-tout:
+			glog.Info("The execution has finished")
+			return true
+		case <-time.After(interval):
+			glog.Error("The execution has timed out")
+			return false
+		}
+	}
+
+	go func() {
+		if executionFunc() {
+			for _ = range ticker.C {
+				if !executionFunc() {
+					break
+				}
+			}
+		}
+		done <- true
+	}()
+	<-done
+}
+
+func reconcile(context *config.RunContext) {
 	serviceGroups, nodesMap, err := buildexpectedState(context)
 	if err != nil {
 		glog.Errorf("Failed to build expected state by inspecting kubernetes configuration. error: %s", err)

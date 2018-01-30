@@ -206,7 +206,7 @@ func (suite *ClientTestSuite) TestGetConfigMap_apiCallFails() {
 }
 
 func (suite *ClientTestSuite) TestGetIngressControllers() {
-	expectedName := "test-ingress-controller"
+	expectedName := "test-ingress-controller-80"
 	expectedNodeSelector := map[string]string{
 		"ingress_node": "true",
 		"class":        "10g",
@@ -564,7 +564,7 @@ func (suite *ClientTestSuite) TestGetIngressControllers_missingLivenessProbe() {
 }
 
 func (suite *ClientTestSuite) TestGetIngressControllers_noNameMatchesIngressController() {
-	brokenName := "test-ingress-controller-broken-name"
+	brokenName := "broken-name"
 	livenessProbe := corev1.Probe{
 		Handler: corev1.Handler{
 			HTTPGet: &corev1.HTTPGetAction{

@@ -77,7 +77,7 @@ func (client clientImpl) GetIngressControllers() ([]*model.IngressController, er
 	controllerList, err := client.extensionsv1beta1Impl.DaemonSets("ingress").List(metav1.ListOptions{})
 	if err == nil {
 		for _, controller := range controllerList.Items {
-			if strings.HasSuffix(controller.GetName(), "ingress-controller") {
+			if strings.Contains(controller.GetName(), "ingress-controller") {
 				ingressController, err := buildIngressController(controller)
 				if err != nil {
 					glog.Errorf("Failed to build ingress controller %s. error: %s", controller.GetName(), err)
