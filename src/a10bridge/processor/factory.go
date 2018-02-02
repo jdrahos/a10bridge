@@ -19,7 +19,9 @@ type A10Processors struct {
 }
 
 func (processors A10Processors) Destroy() {
-	processors.client.Close()
+	if processors.client != nil {
+		processors.client.Close()
+	}
 }
 
 //BuildK8sProcessor builds kubernetes processor

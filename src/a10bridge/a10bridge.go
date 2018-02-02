@@ -5,80 +5,105 @@ import (
 	"a10bridge/model"
 	"a10bridge/processor"
 	"a10bridge/util"
+	"os"
 	"sort"
 	"time"
 
 	"github.com/golang/glog"
 )
 
+var processorBuildK8sProcessor = processor.BuildK8sProcessor
+var configBuildConfig = config.BuildConfig
+var processorBuildA10Processors = processor.BuildA10Processors
+
+type exitCode = int
+
+const (
+	Normal                     exitCode = 0
+	FailedToBuildConfig        exitCode = 1
+	ExcutionTimedOut           exitCode = 2
+	FailedToBuildExpectedState exitCode = 3
+	FailedToProcessA10Instance exitCode = 4
+)
+
 func main() {
+	os.Exit(mainInternal())
+}
+
+func mainInternal() exitCode {
 	defer glog.Flush()
-	context, err := config.BuildConfig()
+	context, err := configBuildConfig()
 	if err != nil {
 		glog.Errorf("Failed to initialize the application. error: %s", err)
-		return
+		return FailedToBuildConfig
 	}
 
-	done := make(chan bool)
+	done := make(chan exitCode)
 	interval := time.Second * time.Duration(*context.Arguments.Interval)
 	ticker := time.NewTicker(interval)
-	executionFunc := func() bool {
+	executionFunc := func() exitCode {
 		glog.Info("The execution is starting")
-		tout := make(chan bool)
+		exitCodeChan := make(chan exitCode)
 		go func() {
-			reconcile(context)
-			tout <- false
+			exitCodeChan <- reconcile(context)
 		}()
 		select {
-		case <-tout:
+		case code := <-exitCodeChan:
 			glog.Info("The execution has finished")
-			return true
+			return code
 		case <-time.After(interval):
 			glog.Error("The execution has timed out")
-			return false
+			return ExcutionTimedOut
 		}
 	}
 
 	if *context.Arguments.Daemon {
 		go func() {
-			if executionFunc() {
+			code := executionFunc()
+			if code == Normal {
 				for _ = range ticker.C {
-					if !executionFunc() {
+					code = executionFunc()
+					if code != Normal {
 						break
 					}
 				}
 			}
-			done <- true
+			done <- code
 		}()
-		<-done
-	} else {
-		executionFunc()
+		return <-done
 	}
+
+	return executionFunc()
 }
 
-func reconcile(context *config.RunContext) {
+func reconcile(context *config.RunContext) exitCode {
 	serviceGroups, nodesMap, err := buildexpectedState(context)
 	if err != nil {
 		glog.Errorf("Failed to build expected state by inspecting kubernetes configuration. error: %s", err)
-		return
+		return FailedToBuildExpectedState
 	}
 
 	if *context.Arguments.Sort {
 		sort.Sort(context.A10Instances)
 	}
 
+	result := Normal
+
 	for _, a10Instance := range context.A10Instances {
 		err := processContext(context, &a10Instance, serviceGroups, nodesMap)
 		if err != nil {
 			glog.Errorf("Failed to process context for a10 server %s. error: %s", a10Instance.Name, err)
+			result = FailedToProcessA10Instance
 		}
 	}
+
+	return result
 }
 
 func buildexpectedState(context *config.RunContext) (map[string]*model.ServiceGroup, map[string]*model.Node, error) {
 	var serviceGroups map[string]*model.ServiceGroup
 	nodesMap := make(map[string]*model.Node)
-	k8sProcessor, err := processor.BuildK8sProcessor()
+	k8sProcessor, err := processorBuildK8sProcessor()
 	if err != nil {
 		glog.Errorf("Failed to build kubernetes processor. error: %s", err)
 		return serviceGroups, nodesMap, err
@@ -104,7 +129,7 @@ func buildexpectedState(context *config.RunContext) (map[string]*model.ServiceGr
 		nodes, err := k8sProcessor.FindNodes(controller.NodeSelectors)
 		if err != nil {
 			glog.Errorf("Failed to get nodes for controller %s. error: %s", controller.Name, err)
-			continue
+			return serviceGroups, nodesMap, err
 		}
 
 		for _, node := range nodes {
@@ -136,7 +161,7 @@ func processContext(context *config.RunContext, a10instance *config.A10Instance,
 	}
 
 	glog.Infof("Processing context for a10 load balancer %s", a10instance.Name)
-	processors, err := processor.BuildA10Processors(a10instance)
+	processors, err := processorBuildA10Processors(a10instance)
 	if err != nil {
 		return err
 	}

@@ -2,15 +2,22 @@ package main
 
 import (
 	"a10bridge/apiserver"
+	"a10bridge/config"
+	"a10bridge/mocks"
 	"a10bridge/model"
+	"a10bridge/processor"
 	bridgeTesting "a10bridge/testing"
 	"a10bridge/util"
+	"errors"
 	"flag"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
 	"testing"
+	"time"
+
+	"github.com/golang/glog"
 
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
@@ -20,20 +27,20 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 )
 
-type MainTestSuite struct {
+type MainFunctionalTestSuite struct {
 	suite.Suite
 	testServer *bridgeTesting.ServerConfig
 	configFile string
 	resolver   *bridgeTesting.ConfigurableResolver
 }
 
-func (suite *MainTestSuite) SetupTest() {
+func (suite *MainFunctionalTestSuite) SetupTest() {
 	suite.resolver.Reset()
 	suite.testServer.Reset()
 }
 
-func TestA10Bridge(t *testing.T) {
-	tests := new(MainTestSuite)
+func TestA10BridgeFunctional(t *testing.T) {
+	tests := new(MainFunctionalTestSuite)
 
 	tests.testServer = bridgeTesting.NewTestServer(t).Start()
 	defer tests.testServer.Stop()
@@ -45,7 +52,7 @@ func TestA10Bridge(t *testing.T) {
 	suite.Run(t, tests)
 }
 
-func (suite MainTestSuite) TestV2Protocol() {
+func (suite MainFunctionalTestSuite) TestV2Protocol() {
 	suite.writeConfigFile("2")
 	defer os.Remove(suite.configFile)
 
@@ -377,11 +384,12 @@ func (suite MainTestSuite) TestV2Protocol() {
 		Response().
 		Body(v2OkResponse(), "application/json")
 
-	main()
+	exitcode := mainInternal()
+	suite.Assert().Equal(Normal, exitcode)
 	suite.testServer.AssertNoPendingRequests()
 }
 
-func (suite MainTestSuite) TestV3Protocol() {
+func (suite MainFunctionalTestSuite) TestV3Protocol() {
 	suite.writeConfigFile("3")
 	defer os.Remove(suite.configFile)
 
@@ -671,16 +679,17 @@ func (suite MainTestSuite) TestV3Protocol() {
 		Response().
 		Body(v3OkResponse(), "application/json")
 
-	main()
+	exitcode := mainInternal()
+	suite.Assert().Equal(Normal, exitcode)
 	suite.testServer.AssertNoPendingRequests()
 }
 
 type nodeListBuilder struct {
-	suite *MainTestSuite
+	suite *MainFunctionalTestSuite
 	nodes []corev1.Node
 }
 
-func newNodeListBuilder(suite MainTestSuite) *nodeListBuilder {
+func newNodeListBuilder(suite MainFunctionalTestSuite) *nodeListBuilder {
 	builder := new(nodeListBuilder)
 	builder.suite = &suite
 	return builder
@@ -702,11 +711,11 @@ func (builder *nodeListBuilder) buildList() corev1.NodeList {
 }
 
 type configMapListBuilder struct {
-	suite      *MainTestSuite
+	suite      *MainFunctionalTestSuite
 	configMaps []corev1.ConfigMap
 }
 
-func newConfigMapListBuilder(suite MainTestSuite) *configMapListBuilder {
+func newConfigMapListBuilder(suite MainFunctionalTestSuite) *configMapListBuilder {
 	builder := new(configMapListBuilder)
 	builder.suite = &suite
 	return builder
@@ -728,18 +737,18 @@ func (builder *configMapListBuilder) buildList() corev1.ConfigMapList {
 }
 
 type daemonSetListBuilder struct {
-	suite      *MainTestSuite
+	suite      *MainFunctionalTestSuite
 	daemonSets []extensionsv1beta1.DaemonSet
 }
 
-func newDaemonSetListBuilder(suite MainTestSuite) *daemonSetListBuilder {
+func newDaemonSetListBuilder(suite MainFunctionalTestSuite) *daemonSetListBuilder {
 	builder := new(daemonSetListBuilder)
 	builder.suite = &suite
 	return builder
 }
 
 type daemonSetBuilder struct {
-	suite       *MainTestSuite
+	suite       *MainFunctionalTestSuite
 	listBuilder *daemonSetListBuilder
 	daemonSet   extensionsv1beta1.DaemonSet
 }
@@ -813,7 +822,7 @@ func configMapData() map[string]string {
 	}
 }
 
-func (suite *MainTestSuite) writeConfigFile(version string) {
+func (suite *MainFunctionalTestSuite) writeConfigFile(version string) {
 	binary, err := ioutil.ReadFile("testdata/config.template.v" + version)
 	if err != nil {
 		suite.T().Errorf("Failed to rad config template, error: %s", err)
@@ -1140,4 +1149,445 @@ func v3MemberRequest(member *model.Member) string {
 		  "member-priority": 1
 		}
 	  }`
+}
+
+type MainTestSuite struct {
+	suite.Suite
+	helper *TestHelper
+}
+
+func TestA10Bridge(t *testing.T) {
+	tests := new(MainTestSuite)
+	tests.helper = new(TestHelper)
+
+	suite.Run(t, tests)
+}
+
+func (suite *MainTestSuite) Test() {
+	glog.Error("In Test_otherThanFirstExecutionFails")
+	runContext := runContext()
+	runContext.Arguments.Daemon = boolPtr(true)
+	runContext.Arguments.Interval = intPtr(5)
+	originalBuildConfig := suite.helper.SetBuildConfigFunc(func() (*config.RunContext, error) {
+		return runContext, nil
+	})
+	defer suite.helper.SetBuildConfigFunc(originalBuildConfig)
+
+	k8sProcessor := new(mocks.K8sProcessor)
+	originalBuildK8sProcessor := suite.helper.SetBuildK8sProcessorFunc(func() (processor.K8sProcessor, error) {
+		defer suite.helper.SetBuildK8sProcessorFunc(func() (processor.K8sProcessor, error) {
+			return nil, errors.New("failure")
+		})
+		return k8sProcessor, nil
+	})
+	defer suite.helper.SetBuildK8sProcessorFunc(originalBuildK8sProcessor)
+
+	healthCheckProcessor := new(mocks.HealthCheckProcessor)
+	nodeProcessor := new(mocks.NodeProcessor)
+	serviceGroupsProcessor := new(mocks.ServiceGroupProcessor)
+	originalBuildA10Processors := suite.helper.SetBuildA10ProcessorsFunc(func(a10instance *config.A10Instance) (*processor.A10Processors, error) {
+		return &processor.A10Processors{
+			HealthCheck:  healthCheckProcessor,
+			Node:         nodeProcessor,
+			ServiceGroup: serviceGroupsProcessor,
+		}, nil
+	})
+	defer suite.helper.SetBuildA10ProcessorsFunc(originalBuildA10Processors)
+
+	environment := environment()
+	k8sProcessor.On("BuildEnvironment").Return(environment, nil)
+	ingressControllers := ingressControllers()
+	k8sProcessor.On("FindIngressControllers").Return(ingressControllers, nil)
+	nodes := nodes()
+	k8sProcessor.On("FindNodes", ingressControllers[0].NodeSelectors).Return(nodes, nil)
+	svcGroupName := "svcGroup"
+	serviceGroups := serviceGroups(svcGroupName)
+	k8sProcessor.On("BuildServiceGroups", ingressControllers, environment).Return(serviceGroups)
+	nodeProcessor.On("ProcessNode", nodes[0]).Return(nil)
+	nodeProcessor.On("ProcessNode", nodes[1]).Return(nil)
+	healthCheckProcessor.On("ProcessHealthCheck", serviceGroups[svcGroupName].Health).Return(nil)
+	serviceGroupsProcessor.On("ProcessServiceGroup", serviceGroups[svcGroupName], []string{}).Return(nil)
+
+	exitCode := mainInternal()
+	suite.Assert().Equal(FailedToBuildExpectedState, exitCode)
+}
+
+func (suite *MainTestSuite) Test_buildConfigsFails() {
+	originalBuildConfig := suite.helper.SetBuildConfigFunc(func() (*config.RunContext, error) {
+		return nil, errors.New("failure")
+	})
+	defer suite.helper.SetBuildConfigFunc(originalBuildConfig)
+
+	exitCode := mainInternal()
+	suite.Assert().Equal(FailedToBuildConfig, exitCode)
+}
+
+func (suite *MainTestSuite) Test_buildK8sProcessorFails() {
+	originalBuildConfig := suite.helper.SetBuildConfigFunc(func() (*config.RunContext, error) {
+		return runContext(), nil
+	})
+	defer suite.helper.SetBuildConfigFunc(originalBuildConfig)
+
+	originalBuildK8sProcessor := suite.helper.SetBuildK8sProcessorFunc(func() (processor.K8sProcessor, error) {
+		return nil, errors.New("failure")
+	})
+	defer suite.helper.SetBuildK8sProcessorFunc(originalBuildK8sProcessor)
+
+	exitCode := mainInternal()
+	suite.Assert().Equal(FailedToBuildExpectedState, exitCode)
+}
+
+func (suite *MainTestSuite) Test_buildEnvironmentFails() {
+	originalBuildConfig := suite.helper.SetBuildConfigFunc(func() (*config.RunContext, error) {
+		return runContext(), nil
+	})
+	defer suite.helper.SetBuildConfigFunc(originalBuildConfig)
+
+	k8sProcessor := new(mocks.K8sProcessor)
+
+	originalBuildK8sProcessor := suite.helper.SetBuildK8sProcessorFunc(func() (processor.K8sProcessor, error) {
+		return k8sProcessor, nil
+	})
+	defer suite.helper.SetBuildK8sProcessorFunc(originalBuildK8sProcessor)
+
+	k8sProcessor.On("BuildEnvironment").Return(nil, errors.New("failure"))
+
+	exitCode := mainInternal()
+	suite.Assert().Equal(FailedToBuildExpectedState, exitCode)
+}
+
+func (suite *MainTestSuite) Test_findIngressControllersFails() {
+	originalBuildConfig := suite.helper.SetBuildConfigFunc(func() (*config.RunContext, error) {
+		return runContext(), nil
+	})
+	defer suite.helper.SetBuildConfigFunc(originalBuildConfig)
+
+	k8sProcessor := new(mocks.K8sProcessor)
+
+	originalBuildK8sProcessor := suite.helper.SetBuildK8sProcessorFunc(func() (processor.K8sProcessor, error) {
+		return k8sProcessor, nil
+	})
+	defer suite.helper.SetBuildK8sProcessorFunc(originalBuildK8sProcessor)
+
+	k8sProcessor.On("BuildEnvironment").Return(environment(), nil)
+	k8sProcessor.On("FindIngressControllers").Return(nil, errors.New("failure"))
+
+	exitCode := mainInternal()
+	suite.Assert().Equal(FailedToBuildExpectedState, exitCode)
+}
+
+func (suite *MainTestSuite) Test_findNodesFails() {
+	originalBuildConfig := suite.helper.SetBuildConfigFunc(func() (*config.RunContext, error) {
+		return runContext(), nil
+	})
+	defer suite.helper.SetBuildConfigFunc(originalBuildConfig)
+
+	k8sProcessor := new(mocks.K8sProcessor)
+
+	originalBuildK8sProcessor := suite.helper.SetBuildK8sProcessorFunc(func() (processor.K8sProcessor, error) {
+		return k8sProcessor, nil
+	})
+	defer suite.helper.SetBuildK8sProcessorFunc(originalBuildK8sProcessor)
+
+	k8sProcessor.On("BuildEnvironment").Return(environment(), nil)
+	ingressControllers := ingressControllers()
+	k8sProcessor.On("FindIngressControllers").Return(ingressControllers, nil)
+	k8sProcessor.On("FindNodes", ingressControllers[0].NodeSelectors).Return(nil, errors.New("failure"))
+
+	exitCode := mainInternal()
+	suite.Assert().Equal(FailedToBuildExpectedState, exitCode)
+}
+
+func (suite *MainTestSuite) Test_findBuildA10ProcessorsFails() {
+	originalBuildConfig := suite.helper.SetBuildConfigFunc(func() (*config.RunContext, error) {
+		return runContext(), nil
+	})
+	defer suite.helper.SetBuildConfigFunc(originalBuildConfig)
+
+	k8sProcessor := new(mocks.K8sProcessor)
+
+	originalBuildK8sProcessor := suite.helper.SetBuildK8sProcessorFunc(func() (processor.K8sProcessor, error) {
+		return k8sProcessor, nil
+	})
+	defer suite.helper.SetBuildK8sProcessorFunc(originalBuildK8sProcessor)
+
+	originalBuildA10Processors := suite.helper.SetBuildA10ProcessorsFunc(func(a10instance *config.A10Instance) (*processor.A10Processors, error) {
+		return nil, errors.New("failures")
+	})
+	defer suite.helper.SetBuildA10ProcessorsFunc(originalBuildA10Processors)
+
+	environment := environment()
+	k8sProcessor.On("BuildEnvironment").Return(environment, nil)
+	ingressControllers := ingressControllers()
+	k8sProcessor.On("FindIngressControllers").Return(ingressControllers, nil)
+	k8sProcessor.On("FindNodes", ingressControllers[0].NodeSelectors).Return(nodes(), nil)
+	k8sProcessor.On("BuildServiceGroups", ingressControllers, environment).Return(serviceGroups())
+
+	exitCode := mainInternal()
+	suite.Assert().Equal(FailedToProcessA10Instance, exitCode)
+}
+
+func (suite *MainTestSuite) Test_processNodeFails() {
+	originalBuildConfig := suite.helper.SetBuildConfigFunc(func() (*config.RunContext, error) {
+		return runContext(), nil
+	})
+	defer suite.helper.SetBuildConfigFunc(originalBuildConfig)
+
+	k8sProcessor := new(mocks.K8sProcessor)
+
+	originalBuildK8sProcessor := suite.helper.SetBuildK8sProcessorFunc(func() (processor.K8sProcessor, error) {
+		return k8sProcessor, nil
+	})
+	defer suite.helper.SetBuildK8sProcessorFunc(originalBuildK8sProcessor)
+
+	healthCheckProcessor := new(mocks.HealthCheckProcessor)
+	nodeProcessor := new(mocks.NodeProcessor)
+	serviceGroupsProcessor := new(mocks.ServiceGroupProcessor)
+	originalBuildA10Processors := suite.helper.SetBuildA10ProcessorsFunc(func(a10instance *config.A10Instance) (*processor.A10Processors, error) {
+		return &processor.A10Processors{
+			HealthCheck:  healthCheckProcessor,
+			Node:         nodeProcessor,
+			ServiceGroup: serviceGroupsProcessor,
+		}, nil
+	})
+	defer suite.helper.SetBuildA10ProcessorsFunc(originalBuildA10Processors)
+
+	environment := environment()
+	k8sProcessor.On("BuildEnvironment").Return(environment, nil)
+	ingressControllers := ingressControllers()
+	k8sProcessor.On("FindIngressControllers").Return(ingressControllers, nil)
+	nodes := nodes()
+	k8sProcessor.On("FindNodes", ingressControllers[0].NodeSelectors).Return(nodes, nil)
+	svcGroupName := "svcGroup"
+	serviceGroups := serviceGroups(svcGroupName)
+	k8sProcessor.On("BuildServiceGroups", ingressControllers, environment).Return(serviceGroups)
+	nodeProcessor.On("ProcessNode", nodes[0]).Return(nil)
+
+	nodeProcessor.On("ProcessNode", nodes[1]).Return(errors.New("failure"))
+
+	healthCheckProcessor.On("ProcessHealthCheck", serviceGroups[svcGroupName].Health).Return(nil)
+	serviceGroupsProcessor.On("ProcessServiceGroup", serviceGroups[svcGroupName], []string{nodes[1].Name}).Return(nil)
+
+	exitCode := mainInternal()
+	suite.Assert().Equal(Normal, exitCode)
+}
+
+func (suite *MainTestSuite) Test_processHealthCheckFails() {
+	originalBuildConfig := suite.helper.SetBuildConfigFunc(func() (*config.RunContext, error) {
+		return runContext(), nil
+	})
+	defer suite.helper.SetBuildConfigFunc(originalBuildConfig)
+
+	k8sProcessor := new(mocks.K8sProcessor)
+
+	originalBuildK8sProcessor := suite.helper.SetBuildK8sProcessorFunc(func() (processor.K8sProcessor, error) {
+		return k8sProcessor, nil
+	})
+	defer suite.helper.SetBuildK8sProcessorFunc(originalBuildK8sProcessor)
+
+	healthCheckProcessor := new(mocks.HealthCheckProcessor)
+	nodeProcessor := new(mocks.NodeProcessor)
+	serviceGroupsProcessor := new(mocks.ServiceGroupProcessor)
+	originalBuildA10Processors := suite.helper.SetBuildA10ProcessorsFunc(func(a10instance *config.A10Instance) (*processor.A10Processors, error) {
+		return &processor.A10Processors{
+			HealthCheck:  healthCheckProcessor,
+			Node:         nodeProcessor,
+			ServiceGroup: serviceGroupsProcessor,
+		}, nil
+	})
+	defer suite.helper.SetBuildA10ProcessorsFunc(originalBuildA10Processors)
+
+	environment := environment()
+	k8sProcessor.On("BuildEnvironment").Return(environment, nil)
+	ingressControllers := ingressControllers()
+	k8sProcessor.On("FindIngressControllers").Return(ingressControllers, nil)
+	nodes := nodes()
+	k8sProcessor.On("FindNodes", ingressControllers[0].NodeSelectors).Return(nodes, nil)
+	svcGroupNameFail := "failingHealthCheck"
+	svcGroupName := "svcGroup"
+	serviceGroups := serviceGroups(svcGroupNameFail, svcGroupName)
+	k8sProcessor.On("BuildServiceGroups", ingressControllers, environment).Return(serviceGroups)
+	nodeProcessor.On("ProcessNode", nodes[0]).Return(nil)
+	nodeProcessor.On("ProcessNode", nodes[1]).Return(nil)
+
+	healthCheckProcessor.On("ProcessHealthCheck", serviceGroups[svcGroupNameFail].Health).Return(errors.New("failure"))
+
+	healthCheckProcessor.On("ProcessHealthCheck", serviceGroups[svcGroupName].Health).Return(nil)
+	serviceGroupsProcessor.On("ProcessServiceGroup", serviceGroups[svcGroupName], []string{}).Return(nil)
+
+	exitCode := mainInternal()
+	suite.Assert().Equal(Normal, exitCode)
+}
+
+func (suite *MainTestSuite) Test_processServiceGroupFails() {
+	originalBuildConfig := suite.helper.SetBuildConfigFunc(func() (*config.RunContext, error) {
+		return runContext(), nil
+	})
+	defer suite.helper.SetBuildConfigFunc(originalBuildConfig)
+
+	k8sProcessor := new(mocks.K8sProcessor)
+
+	originalBuildK8sProcessor := suite.helper.SetBuildK8sProcessorFunc(func() (processor.K8sProcessor, error) {
+		return k8sProcessor, nil
+	})
+	defer suite.helper.SetBuildK8sProcessorFunc(originalBuildK8sProcessor)
+
+	healthCheckProcessor := new(mocks.HealthCheckProcessor)
+	nodeProcessor := new(mocks.NodeProcessor)
+	serviceGroupsProcessor := new(mocks.ServiceGroupProcessor)
+	originalBuildA10Processors := suite.helper.SetBuildA10ProcessorsFunc(func(a10instance *config.A10Instance) (*processor.A10Processors, error) {
+		return &processor.A10Processors{
+			HealthCheck:  healthCheckProcessor,
+			Node:         nodeProcessor,
+			ServiceGroup: serviceGroupsProcessor,
+		}, nil
+	})
+	defer suite.helper.SetBuildA10ProcessorsFunc(originalBuildA10Processors)
+
+	environment := environment()
+	k8sProcessor.On("BuildEnvironment").Return(environment, nil)
+	ingressControllers := ingressControllers()
+	k8sProcessor.On("FindIngressControllers").Return(ingressControllers, nil)
+	nodes := nodes()
+	k8sProcessor.On("FindNodes", ingressControllers[0].NodeSelectors).Return(nodes, nil)
+	svcGroupNameFail := "failingGroup"
+	svcGroupName := "svcGroup"
+	serviceGroups := serviceGroups(svcGroupNameFail, svcGroupName)
+	k8sProcessor.On("BuildServiceGroups", ingressControllers, environment).Return(serviceGroups)
+	nodeProcessor.On("ProcessNode", nodes[0]).Return(nil)
+	nodeProcessor.On("ProcessNode", nodes[1]).Return(nil)
+	healthCheckProcessor.On("ProcessHealthCheck", serviceGroups[svcGroupNameFail].Health).Return(nil)
+	healthCheckProcessor.On("ProcessHealthCheck", serviceGroups[svcGroupName].Health).Return(nil)
+
+	serviceGroupsProcessor.On("ProcessServiceGroup", serviceGroups[svcGroupNameFail], []string{}).Return(errors.New("failure"))
+	serviceGroupsProcessor.On("ProcessServiceGroup", serviceGroups[svcGroupName], []string{}).Return(nil)
+
+	exitCode := mainInternal()
+	suite.Assert().Equal(Normal, exitCode)
+}
+
+func (suite *MainTestSuite) Test_executionTimesOut() {
+	runContext := runContext()
+	runContext.Arguments.Interval = intPtr(1)
+	originalBuildConfig := suite.helper.SetBuildConfigFunc(func() (*config.RunContext, error) {
+		return runContext, nil
+	})
+	defer suite.helper.SetBuildConfigFunc(originalBuildConfig)
+
+	originalBuildK8sProcessor := suite.helper.SetBuildK8sProcessorFunc(func() (processor.K8sProcessor, error) {
+		time.Sleep(time.Second * 5)
+		return nil, nil
+	})
+	defer suite.helper.SetBuildK8sProcessorFunc(originalBuildK8sProcessor)
+
+	exitCode := mainInternal()
+	suite.Assert().Equal(ExcutionTimedOut, exitCode)
+}
+
+func (suite *MainTestSuite) Test_daemonExecutionTimesOut() {
+	runContext := runContext()
+	runContext.Arguments.Interval = intPtr(1)
+	runContext.Arguments.Daemon = boolPtr(true)
+	originalBuildConfig := suite.helper.SetBuildConfigFunc(func() (*config.RunContext, error) {
+		return runContext, nil
+	})
+	defer suite.helper.SetBuildConfigFunc(originalBuildConfig)
+
+	originalBuildK8sProcessor := suite.helper.SetBuildK8sProcessorFunc(func() (processor.K8sProcessor, error) {
+		time.Sleep(time.Second * 5)
+		return nil, nil
+	})
+	defer suite.helper.SetBuildK8sProcessorFunc(originalBuildK8sProcessor)
+
+	exitCode := mainInternal()
+	suite.Assert().Equal(ExcutionTimedOut, exitCode)
+}
+
+func (suite *MainTestSuite) Test_daemonExecutionErrorsOut() {
+	runContext := runContext()
+	runContext.Arguments.Daemon = boolPtr(true)
+	originalBuildConfig := suite.helper.SetBuildConfigFunc(func() (*config.RunContext, error) {
+		return runContext, nil
+	})
+	defer suite.helper.SetBuildConfigFunc(originalBuildConfig)
+
+	originalBuildK8sProcessor := suite.helper.SetBuildK8sProcessorFunc(func() (processor.K8sProcessor, error) {
+		return nil, errors.New("failure")
+	})
+	defer suite.helper.SetBuildK8sProcessorFunc(originalBuildK8sProcessor)
+
+	exitCode := mainInternal()
+	suite.Assert().Equal(FailedToBuildExpectedState, exitCode)
+}
+
+func runContext() *config.RunContext {
+	return &config.RunContext{
+		Arguments: &config.Args{
+			Sort:     boolPtr(false),
+			Interval: intPtr(60),
+			Daemon:   boolPtr(false),
+		},
+		A10Instances: config.A10Instances{
+			config.A10Instance{
+				Name:       "lb",
+				UserName:   "user",
+				Password:   "pwd",
+				APIUrl:     "http://lb.com",
+				APIVersion: 3,
+			},
+		},
+	}
+}
+
+func serviceGroups(names ...string) map[string]*model.ServiceGroup {
+	serviceGroups := make(map[string]*model.ServiceGroup)
+	for _, svcGroupName := range names {
+		serviceGroup := model.ServiceGroup{
+			Name: svcGroupName,
+			Health: &model.HealthCheck{
+				Name: svcGroupName,
+			},
+		}
+		serviceGroups[serviceGroup.Name] = &serviceGroup
+	}
+	return serviceGroups
+}
+
+func nodes() []*model.Node {
+	nodes := make([]*model.Node, 0)
+	nodes = append(nodes, &model.Node{
+		A10Server: "server1",
+		IPAddress: "10.10.10.1",
+		Labels:    map[string]string{"test": "label"},
+		Name:      "node",
+		Weight:    "1",
+	})
+	nodes = append(nodes, &model.Node{
+		A10Server: "server2",
+		IPAddress: "10.10.10.2",
+		Labels:    map[string]string{"test": "label"},
+		Name:      "node",
+		Weight:    "2",
+	})
+	return nodes
+}
+
+func ingressControllers() []*model.IngressController {
+	controllers := make([]*model.IngressController, 0)
+	controllers = append(controllers, &model.IngressController{
+		NodeSelectors: map[string]string{"test": "selector"},
+	})
+	return controllers
+}
+
+func environment() *model.Environment {
+	return &model.Environment{}
+}
+
+func intPtr(value int) *int {
+	return &value
+}
+
+func boolPtr(value bool) *bool {
+	return &value
 }
