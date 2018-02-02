@@ -1,8 +1,6 @@
 package apiserver
 
 import (
-	"net"
-
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/rest"
@@ -12,7 +10,6 @@ type TestHelper struct{}
 type RestInClusterConfigFunc func() (*rest.Config, error)
 type ClientcmdBuildConfigFromFlagsFunc func(masterUrl, kubeconfigPath string) (*rest.Config, error)
 type KubernetesNewForConfigFunc func(c *rest.Config) (*kubernetes.Clientset, error)
-type NetLookupIPFunc func(host string) ([]net.IP, error)
 
 func (helper *TestHelper) BuildClient(clientset *fake.Clientset) K8sClient {
 	return clientImpl{
@@ -36,11 +33,5 @@ func (helper TestHelper) SetClientcmdBuildConfigFromFlagsFunc(buildConfigFromFla
 func (helper TestHelper) SetKubernetesNewForConfigFunc(newForConfigFunc KubernetesNewForConfigFunc) KubernetesNewForConfigFunc {
 	old := kubernetesNewForConfig
 	kubernetesNewForConfig = newForConfigFunc
-	return old
-}
-
-func (helper TestHelper) SetNetLookupIPFunc(netLookupIPFunc NetLookupIPFunc) NetLookupIPFunc {
-	old := netLookupIP
-	netLookupIP = netLookupIPFunc
 	return old
 }

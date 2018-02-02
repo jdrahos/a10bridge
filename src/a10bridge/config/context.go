@@ -2,7 +2,7 @@ package config
 
 type RunContext struct {
 	Arguments    *Args
-	A10Instances []A10Instance
+	A10Instances A10Instances
 }
 
 func BuildConfig() (*RunContext, error) {

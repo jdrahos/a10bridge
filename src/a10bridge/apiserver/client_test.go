@@ -2,10 +2,12 @@ package apiserver_test
 
 import (
 	"a10bridge/apiserver"
+	"a10bridge/util"
 	"errors"
-	"net"
 	"strconv"
 	"testing"
+
+	a10bridgetesting "a10bridge/testing"
 
 	k8stesting "k8s.io/client-go/testing"
 
@@ -20,30 +22,32 @@ import (
 
 type ClientTestSuite struct {
 	suite.Suite
-	helper *apiserver.TestHelper
+	helper   *apiserver.TestHelper
+	resolver *a10bridgetesting.ConfigurableResolver
 }
 
 func (suite *ClientTestSuite) SetupTest() {
+	suite.resolver.Reset()
 }
 
 func TestClient(t *testing.T) {
 	tests := new(ClientTestSuite)
 	tests.helper = new(apiserver.TestHelper)
+	tests.resolver = new(a10bridgetesting.ConfigurableResolver)
+	originalResolver := util.InjectIPResolver(tests.resolver)
+	defer util.InjectIPResolver(originalResolver)
+
 	suite.Run(t, tests)
 }
 
 func (suite *ClientTestSuite) TestGetNodes() {
-	ip1 := []byte{10, 10, 10, 1}
-	original := suite.helper.SetNetLookupIPFunc(func(host string) ([]net.IP, error) {
-		return []net.IP{ip1}, nil
-	})
-	defer suite.helper.SetNetLookupIPFunc(original)
+	expectedName := "node1"
+	suite.resolver.AddRecord(expectedName, "10.10.10.1")
 
 	expectedLabels := map[string]string{
 		"test":    "label",
 		"another": "test label",
 	}
-	expectedName := "node1"
 	defaultA10Server := expectedName
 	defaultWeight := "1"
 	node1 := corev1.Node{}
@@ -69,11 +73,8 @@ func (suite *ClientTestSuite) TestGetNodes() {
 }
 
 func (suite *ClientTestSuite) TestGetNodes_serverNameFromAnnotation() {
-	ip1 := []byte{10, 10, 10, 1}
-	original := suite.helper.SetNetLookupIPFunc(func(host string) ([]net.IP, error) {
-		return []net.IP{ip1}, nil
-	})
-	defer suite.helper.SetNetLookupIPFunc(original)
+	expectedName := "node1"
+	suite.resolver.AddRecord(expectedName, "10.10.10.1")
 
 	expectedA10Server := "server1"
 	annotations := map[string]string{
@@ -83,7 +84,6 @@ func (suite *ClientTestSuite) TestGetNodes_serverNameFromAnnotation() {
 		"test":    "label",
 		"another": "test label",
 	}
-	expectedName := "node1"
 	node1 := corev1.Node{}
 	node1.SetAnnotations(annotations)
 	node1.SetLabels(expectedLabels)
@@ -103,11 +103,8 @@ func (suite *ClientTestSuite) TestGetNodes_serverNameFromAnnotation() {
 }
 
 func (suite *ClientTestSuite) TestGetNodes_serverWeightFromAnnotation() {
-	ip1 := []byte{10, 10, 10, 1}
-	original := suite.helper.SetNetLookupIPFunc(func(host string) ([]net.IP, error) {
-		return []net.IP{ip1}, nil
-	})
-	defer suite.helper.SetNetLookupIPFunc(original)
+	expectedName := "node1"
+	suite.resolver.AddRecord(expectedName, "10.10.10.1")
 
 	expectedWeight := "152"
 	annotations := map[string]string{
@@ -117,7 +114,6 @@ func (suite *ClientTestSuite) TestGetNodes_serverWeightFromAnnotation() {
 		"test":    "label",
 		"another": "test label",
 	}
-	expectedName := "node1"
 	node1 := corev1.Node{}
 	node1.SetAnnotations(annotations)
 	node1.SetLabels(expectedLabels)
@@ -137,11 +133,6 @@ func (suite *ClientTestSuite) TestGetNodes_serverWeightFromAnnotation() {
 }
 
 func (suite *ClientTestSuite) TestGetNodes_ipResolutionFails() {
-	original := suite.helper.SetNetLookupIPFunc(func(host string) ([]net.IP, error) {
-		return nil, errors.New("fail")
-	})
-	defer suite.helper.SetNetLookupIPFunc(original)
-
 	nodeList := corev1.NodeList{Items: []corev1.Node{corev1.Node{}}}
 	clientset := fake.NewSimpleClientset(&nodeList)
 	client := suite.helper.BuildClient(clientset)

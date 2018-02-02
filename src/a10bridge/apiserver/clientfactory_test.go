@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"k8s.io/client-go/kubernetes/fake"
+
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/stretchr/testify/suite"
@@ -112,4 +114,12 @@ func (suite *ClientFactoryTestSuite) TestCreateClient_inClusterFailsKubectlConfi
 	client, err := apiserver.CreateClient()
 	suite.Assert().NotNil(err)
 	suite.Assert().Nil(client)
+}
+
+func (suite *ClientFactoryTestSuite) TestFakeClientInjection() {
+	fakeClientSet := fake.NewSimpleClientset()
+	apiserver.InjectFakeClient(fakeClientSet)
+	client, err := apiserver.CreateClient()
+	suite.Assert().Nil(err)
+	suite.Assert().NotNil(client)
 }

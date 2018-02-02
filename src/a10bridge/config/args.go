@@ -15,14 +15,18 @@ type Args struct {
 	A10Config *string
 	Interval  *int
 	Debug     *bool
+	Daemon    *bool
+	Sort      *bool
 }
 
 func buildArguments() (*Args, error) {
 	args := Args{
 		A10Config: addStringFlag("a10-config", "path to a10 config yaml file"),
 		A10Pwd:    addStringFlag("a10-pwd", "a10 password"),
-		Interval:  addIntFlag("interval", "invocation interval in minutes"),
+		Interval:  addIntFlag("interval", "invocation interval in seconds"),
 		Debug:     addBoolFlag("debug", "run in debug mode"),
+		Daemon:    addBoolFlag("daemon", "run in daemon mode"),
+		Sort:      addBoolFlag("sort", "run in sorted mode"),
 	}
 
 	flag.Parse()
@@ -57,6 +61,8 @@ func (args Args) printArgs() {
 	fmt.Println("a10-config:", *args.A10Config)
 	fmt.Println("a10-pwd:", *args.A10Pwd)
 	fmt.Println("interval:", *args.Interval)
+	fmt.Println("daemon:", *args.Daemon)
+	fmt.Println("sort:", *args.Sort)
 	fmt.Println()
 }
 

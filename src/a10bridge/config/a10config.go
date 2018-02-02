@@ -11,6 +11,18 @@ type A10Config struct {
 	Instances []A10Instance `yaml:"instances"`
 }
 
+type A10Instances []A10Instance
+
+func (s A10Instances) Len() int {
+	return len(s)
+}
+func (s A10Instances) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+func (s A10Instances) Less(i, j int) bool {
+	return s[i].Name < s[j].Name
+}
+
 //A10Instance a10 instance configuration
 type A10Instance struct {
 	Name       string `yaml:"name"`

@@ -8,3 +8,15 @@ type Node struct {
 	IPAddress string
 	Labels    map[string]string
 }
+
+type Nodes []*Node
+
+func (s Nodes) Len() int {
+	return len(s)
+}
+func (s Nodes) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+func (s Nodes) Less(i, j int) bool {
+	return s[i].Name < s[j].Name
+}

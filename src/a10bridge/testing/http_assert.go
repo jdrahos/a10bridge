@@ -61,7 +61,7 @@ func (check HTTPRequestCheck) assertBody() {
 		check.t.Errorf("Failed to read request body to check %s", err)
 		return
 	}
-	httpBody := string(binary)
+	httpBody := normalizeJson(string(binary))
 	check.assert.EqualValues(check.expectedBody, httpBody, "Unexpected body '%s'. Expected '%s'", httpBody, check.expectedBody)
 }
 
@@ -77,4 +77,10 @@ func (check HTTPRequestCheck) inspectBody() {
 		check.t.Errorf("Body inspection has failed: %s", msg)
 	}
 
+}
+
+func (server ServerConfig) AssertNoPendingRequests() {
+	if len(server.requests) > 0 {
+		server.t.Errorf("There are still %d pending requests", len(server.requests))
+	}
 }

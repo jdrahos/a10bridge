@@ -5,6 +5,7 @@ import (
 	"a10bridge/model"
 	"a10bridge/processor"
 	"a10bridge/util"
+	"sort"
 	"time"
 
 	"github.com/golang/glog"
@@ -19,7 +20,7 @@ func main() {
 	}
 
 	done := make(chan bool)
-	interval := time.Minute * time.Duration(*context.Arguments.Interval)
+	interval := time.Second * time.Duration(*context.Arguments.Interval)
 	ticker := time.NewTicker(interval)
 	executionFunc := func() bool {
 		glog.Info("The execution is starting")
@@ -38,17 +39,21 @@ func main() {
 		}
 	}
 
-	go func() {
-		if executionFunc() {
-			for _ = range ticker.C {
-				if !executionFunc() {
-					break
+	if *context.Arguments.Daemon {
+		go func() {
+			if executionFunc() {
+				for _ = range ticker.C {
+					if !executionFunc() {
+						break
+					}
 				}
 			}
-		}
-		done <- true
-	}()
-	<-done
+			done <- true
+		}()
+		<-done
+	} else {
+		executionFunc()
+	}
 }
 
 func reconcile(context *config.RunContext) {
@@ -58,8 +63,12 @@ func reconcile(context *config.RunContext) {
 		return
 	}
 
+	if *context.Arguments.Sort {
+		sort.Sort(context.A10Instances)
+	}
+
 	for _, a10Instance := range context.A10Instances {
-		err := processContext(&a10Instance, serviceGroups, nodesMap)
+		err := processContext(context, &a10Instance, serviceGroups, nodesMap)
 		if err != nil {
 			glog.Errorf("Failed to process context for a10 server %s. error: %s", a10Instance.Name, err)
 		}
@@ -87,6 +96,7 @@ func buildexpectedState(context *config.RunContext) (map[string]*model.ServiceGr
 		glog.Errorf("Failed to get ingress controllers. error: %s", err)
 		return serviceGroups, nodesMap, err
 	}
+
 	glog.Infof("Ingress controllers: %s", util.ToJSON(controllers))
 
 	for _, controller := range controllers {
@@ -111,7 +121,20 @@ func buildexpectedState(context *config.RunContext) (map[string]*model.ServiceGr
 	return serviceGroups, nodesMap, nil
 }
 
-func processContext(a10instance *config.A10Instance, serviceGroups map[string]*model.ServiceGroup, nodesMap map[string]*model.Node) error {
+func processContext(context *config.RunContext, a10instance *config.A10Instance, serviceGroups map[string]*model.ServiceGroup, nodesMap map[string]*model.Node) error {
+	nodesSlice := make(model.Nodes, 0)
+	for _, node := range nodesMap {
+		nodesSlice = append(nodesSlice, node)
+	}
+	serviceGroupSlice := make(model.ServiceGroups, 0)
+	for _, serviceGroup := range serviceGroups {
+		serviceGroupSlice = append(serviceGroupSlice, serviceGroup)
+	}
+	if *context.Arguments.Sort {
+		sort.Sort(nodesSlice)
+		sort.Sort(serviceGroupSlice)
+	}
+
 	glog.Infof("Processing context for a10 load balancer %s", a10instance.Name)
 	processors, err := processor.BuildA10Processors(a10instance)
 	if err != nil {
@@ -120,27 +143,25 @@ func processContext(a10instance *config.A10Instance, serviceGroups map[string]*m
 	defer processors.Destroy()
 	glog.Info("Making sure servers in a10 are in sync with ingress nodes")
 	failedNodeNames := make([]string, 0)
-
-	for nodeName, node := range nodesMap {
+	for _, node := range nodesSlice {
 		err := processors.Node.ProcessNode(node)
 		if err != nil {
-			glog.Errorf("Failed to process node %s. error: %s", nodeName, err)
-			failedNodeNames = append(failedNodeNames, nodeName)
+			glog.Errorf("Failed to process node %s. error: %s", node.Name, err)
+			failedNodeNames = append(failedNodeNames, node.Name)
 		}
 	}
 
 	glog.Info("Processing service groups")
-
-	for serviceGroupName, serviceGroup := range serviceGroups {
+	for _, serviceGroup := range serviceGroupSlice {
 		err := processors.HealthCheck.ProcessHealthCheck(serviceGroup.Health)
 		if err != nil {
-			glog.Errorf("Failed to process health check %s, error: %s", serviceGroupName, err)
+			glog.Errorf("Failed to process health check %s, error: %s", serviceGroup.Name, err)
 			continue
 		}
 
 		err = processors.ServiceGroup.ProcessServiceGroup(serviceGroup, failedNodeNames)
 		if err != nil {
-			glog.Errorf("Failed to process service group %s, error: %s", serviceGroupName, err)
+			glog.Errorf("Failed to process service group %s, error: %s", serviceGroup.Name, err)
 			continue
 		}
 	}

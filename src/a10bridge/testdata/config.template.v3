@@ -1,0 +1,6 @@
+instances:
+  - name: "lga-lb01"
+    apiUrl: "{{.Url}}"
+    apiVersion: 3
+    userName: "dingo"
+    password: "dongo"

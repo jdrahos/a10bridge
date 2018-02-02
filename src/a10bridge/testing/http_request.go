@@ -2,10 +2,10 @@ package testing
 
 import (
 	"net/http"
-	"strings"
+	"regexp"
 	"testing"
 
-	tassert "github.com/stretchr/testify/assert"
+	tassert "github.com/stretchr/testify/require"
 )
 
 type HTTPRequestCheck struct {
@@ -55,7 +55,7 @@ func (check *HTTPRequestCheck) Header(key, val string) *HTTPRequestCheck {
 }
 
 func (check *HTTPRequestCheck) Body(body string) *HTTPRequestCheck {
-	check.expectedBody = strings.Replace(body, "\t", "    ", -1)
+	check.expectedBody = normalizeJson(body)
 	return check
 }
 
@@ -72,4 +72,9 @@ func (check *HTTPRequestCheck) Method(method string) *HTTPRequestCheck {
 func (check *HTTPRequestCheck) Response() *HTTPResponseConfig {
 	check.response.requestCheck = check
 	return check.response
+}
+
+func normalizeJson(json string) string {
+	rexp := regexp.MustCompile(`(\s{2,}|\n)`)
+	return rexp.ReplaceAllString(json, " ")
 }
