@@ -111,20 +111,14 @@ func httpCall(method string, urlTpl string, tplPath string, request interface{},
 func processResponse(httpResponse *http.Response, response interface{}) error {
 	defer httpResponse.Body.Close()
 
-	if httpResponse.StatusCode >= 400 {
-		return fmt.Errorf("Request failed with status code %d", httpResponse.StatusCode)
-	}
-
 	binary, err := ioutilReadAll(httpResponse.Body)
-	if err != nil {
-		return err
+	if err == nil {
+		fmt.Println(string(binary))
+		err = json.Unmarshal(binary, &response)
 	}
 
-	fmt.Println(string(binary))
-
-	err = json.Unmarshal(binary, &response)
-	if err != nil {
-		return err
+	if err != nil && httpResponse.StatusCode >= 400 {
+		return fmt.Errorf("Request failed with status code %d", httpResponse.StatusCode)
 	}
 
 	return err

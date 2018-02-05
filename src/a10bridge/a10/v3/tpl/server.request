@@ -4,6 +4,6 @@
     "host": "{{.Server.IPAddress}}",
     "action": "enable",
     "weight": {{.Server.Weight}},
-    "conn-limit": 1000
+    "conn-limit": 8000000
   }
 }

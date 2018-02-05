@@ -995,7 +995,7 @@ func v3ServerRequest(node model.Node) string {
 		  "host": "` + node.IPAddress + `",
 		  "action": "enable",
 		  "weight": ` + node.Weight + `,
-		  "conn-limit": 1000
+		  "conn-limit": 8000000
 		}
 	  }`
 }
@@ -1007,7 +1007,7 @@ func v3ServerResponse(node model.Node) string {
 		  "host": "` + node.IPAddress + `",
 		  "action": "enable",
 		  "weight": ` + node.Weight + `,
-		  "conn-limit": 1000
+		  "conn-limit": 8000000
 		}
 	  }`
 }

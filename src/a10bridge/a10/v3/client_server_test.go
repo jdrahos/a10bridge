@@ -28,7 +28,7 @@ func testUpdateServer(testServer *testing.ServerConfig, assert *assert.Assertion
     "host": "`+node.IPAddress+`",
     "action": "enable",
     "weight": `+node.Weight+`,
-    "conn-limit": 1000
+    "conn-limit": 8000000
   }
 }`).
 		Response().
@@ -91,7 +91,7 @@ func testCreateServer(testServer *testing.ServerConfig, assert *assert.Assertion
     "host": "`+node.IPAddress+`",
     "action": "enable",
     "weight": `+node.Weight+`,
-    "conn-limit": 1000
+    "conn-limit": 8000000
   }
 }`).
 		Response().
