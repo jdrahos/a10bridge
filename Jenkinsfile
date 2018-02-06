@@ -34,13 +34,7 @@ podTemplate(label: 'build-agent-go',
       }
     }
     stage('Build Docker Image') {
-      input {
-        message "Should we build and push docker image to registry?"
-        ok "Yes, we should."
-        parameters {
-          string(name: 'IMAGE_TAG', defaultValue: 'v0.0', description: 'Version of the image')
-        }
-      }
+      input message: 'Should we build and push docker image to registry?', ok: 'Yes, we should.', parameters: [string(defaultValue: 'v0.0', description: 'Version of the image', name: 'IMAGE_TAG')], submitterParameter: 'IMAGE_TAG'
       container('docker') {
         sh 'docker build -t registry.pulsepoint.com/a10bridge:${IMAGE_TAG} src/a10bridge'
         sh 'docker push registry.pulsepoint.com/a10bridge:${IMAGE_TAG}'
