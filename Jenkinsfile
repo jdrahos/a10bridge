@@ -25,8 +25,8 @@ pipeline {
     stage('Test application') {
       steps {
         container('build-agent-go') {
-          sh 'go build "$GOPATH/src/a10bridge/..."'
-          sh 'go test "$GOPATH/src/a10bridge/..."'
+          sh 'cd "$GOPATH/src/a10bridge"; go build -v ./...'
+          sh 'cd "$GOPATH/src/a10bridge"; go test -v ./...'
         }
       }
     }
