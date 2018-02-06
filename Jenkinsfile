@@ -1,25 +1,12 @@
-pipeline {
-  agent {
-    kubernetes {
-      label 'build-agent-go'
-      containerTemplate {
-        name 'build-agent-go'
-        image 'registry.pulsepoint.com/build-agent-go:0.1'
-        ttyEnabled true
-        command 'cat'
-        volumes {
-          hostPathVolume {
-            hostPath '/var/run/docker.sock'
-            mountPath '/var/run/docker.sock'
-          }
-        } 
-      }
-    }
-  }
-  environment {
-    GOPATH = "${WORKSPACE}"
-  }
-  stages {
+podTemplate(label: 'build-agent-go', 
+  containers: [
+    containerTemplate(name: 'golang', image: 'golang:1.9.3-alpine3.6', ttyEnabled: true, command: 'cat')
+    containerTemplate(name: 'docker', image: 'docker:17.09', ttyEnabled: true, command: 'cat')
+  ],
+  volumes: [
+    hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock')
+  ]) {
+  node('build-agent-go') {
     stage('Download dependencies') {
       steps {
         container('build-agent-go') {
