@@ -11,7 +11,6 @@ podTemplate(label: 'build-agent-go',
 
     stage('Download dependencies') {
       container('golang') {
-//        git 'https://github.com/jdrahos/a10bridge.git'
         sh 'pwd'
         sh 'printenv | sort'
         sh 'ls -lah'
@@ -26,9 +25,12 @@ podTemplate(label: 'build-agent-go',
         sh 'export GOPATH="$PWD";cd src/a10bridge; go test -v ./...'
       }
     }
-    stage('Build Application') {
+    stage('Build application') {
       container('golang') {
-        sh "export GOPATH=$PWD;cd src/a10bridge; CGO_ENABLED=0 GOOS=linux go build -a -tags netgo -ldflags '-w' ."
+        sh 'pwd'
+        sh 'printenv | sort'
+        sh 'ls -lah'
+        sh 'export GOPATH="$PWD";cd src/a10bridge; CGO_ENABLED=0 GOOS=linux go build -a -tags netgo -ldflags \'-w\' .'
       }
     }
     stage('Build Docker Image') {
