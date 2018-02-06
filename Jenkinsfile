@@ -1,6 +1,6 @@
 podTemplate(label: 'build-agent-go', 
   containers: [
-    containerTemplate(name: 'golang', image: 'golang:1.9.3-alpine3.6', ttyEnabled: true, command: 'cat')
+    containerTemplate(name: 'golang', image: 'golang:1.9.3-alpine3.6', ttyEnabled: true, command: 'cat'),
     containerTemplate(name: 'docker', image: 'docker:17.09', ttyEnabled: true, command: 'cat')
   ],
   volumes: [
