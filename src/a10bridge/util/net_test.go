@@ -2,6 +2,7 @@ package util_test
 
 import (
 	"a10bridge/util"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -19,7 +20,12 @@ func TestNetUtils(t *testing.T) {
 func (suite *NetUtilsTestSuite) TestLookupLocalhost() {
 	localIp, err := util.LookupIP("localhost")
 	suite.Assert().Nil(err)
-	suite.Assert().Equal("127.0.0.1", localIp)
+
+	if strings.Contains(localIp, ":") {
+		suite.Assert().Equal("::1", localIp)
+	} else {
+		suite.Assert().Equal("127.0.0.1", localIp)
+	}
 }
 
 func (suite *NetUtilsTestSuite) TestLookupFailure() {
