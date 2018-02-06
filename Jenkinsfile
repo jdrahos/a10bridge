@@ -11,6 +11,7 @@ podTemplate(label: 'build-agent-go',
       container('golang') {
         sh 'pwd'
         sh 'printenv | sort'
+        sh 'ls -lah'
         sh 'apk add --no-cache git'
         sh 'export GOPATH="$PWD";cd "src/a10bridge";dep ensure'
       }
