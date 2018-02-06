@@ -4,10 +4,15 @@ pipeline {
       label 'build-agent-go'
       containerTemplate {
         name 'build-agent-go'
-        args '-v /var/run/docker.sock:/var/run/docker.sock'
         image 'registry.pulsepoint.com/build-agent-go:0.1'
         ttyEnabled true
         command 'cat'
+        volumes {
+          hostPathVolume {
+            hostPath '/var/run/docker.sock'
+            mountPath '/var/run/docker.sock'
+          }
+        } 
       }
     }
   }
