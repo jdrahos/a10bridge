@@ -11,7 +11,7 @@ pipeline {
     }
   }
   environment {
-    GOPATH = "${PWD}/a10bridge"
+    GOPATH = "${WORKSPACE}/a10bridge"
   }
   stages {
     stage('Download dependencies') {
