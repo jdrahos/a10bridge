@@ -12,18 +12,18 @@ podTemplate(label: 'build-agent-go',
         sh 'pwd'
         sh 'printenv | sort'
         sh 'apk add --no-cache git'
-        sh 'export GOPATH="$WORKSPACE";cd "$WORKSPACE/src/a10bridge";dep ensure'
+        sh 'export GOPATH="$PWD";cd "src/a10bridge";dep ensure'
       }
     }
     stage('Test application') {
       container('golang') {
-        sh 'export GOPATH="$WORKSPACE";cd "$WORKSPACE/src/a10bridge"; go build -v ./...'
-        sh 'export GOPATH="$WORKSPACE";cd "$WORKSPACE/src/a10bridge"; go test -v ./...'
+        sh 'export GOPATH="$PWD";cd src/a10bridge; go build -v ./...'
+        sh 'export GOPATH="$PWD";cd src/a10bridge; go test -v ./...'
       }
     }
     stage('Build Application') {
       container('golang') {
-        sh "export GOPATH=$WORKSPACE;cd $WORKSPACE/src/a10bridge; CGO_ENABLED=0 GOOS=linux go build -a -tags netgo -ldflags '-w' ."
+        sh "export GOPATH=$PWD;cd src/a10bridge; CGO_ENABLED=0 GOOS=linux go build -a -tags netgo -ldflags '-w' ."
       }
     }
     stage('Build Docker Image') {
@@ -35,7 +35,7 @@ podTemplate(label: 'build-agent-go',
         }
       }
       container('docker') {
-        sh 'docker build -t registry.pulsepoint.com/a10bridge:${IMAGE_TAG} "$WORKSPACE/src/a10bridge"'
+        sh 'docker build -t registry.pulsepoint.com/a10bridge:${IMAGE_TAG} src/a10bridge'
         sh 'docker push registry.pulsepoint.com/a10bridge:${IMAGE_TAG}'
       }
     }
