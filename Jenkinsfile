@@ -14,6 +14,7 @@ podTemplate(label: 'build-agent-go',
         sh 'printenv | sort'
         sh 'ls -lah'
         sh 'apk add --no-cache git'
+        sh 'curl -fsSL -o /usr/local/go/bin/dep https://github.com/golang/dep/releases/download/v0.4.1/dep-linux-amd64 && chmod +x /usr/local/go/bin/dep;'
         sh 'export GOPATH="$PWD";cd "src/a10bridge";dep ensure'
       }
     }
