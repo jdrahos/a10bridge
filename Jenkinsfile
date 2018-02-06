@@ -19,15 +19,7 @@ pipeline {
         }
       }
     }
-    stage('Download dependencies') {
-      steps {
-        container('build-agent-go') {
-          sh 'export GOPATH=`pwd`"/a10bridge"'
-          sh 'cd "$GOPATH/src/a10bridge";dep ensure '
-        }
-      }
-    }
-    stage('Test') {
+    stage('Test application') {
       steps {
         container('build-agent-go') {
           sh 'go build "$GOPATH/src/a10bridge/..."'
