@@ -7,9 +7,11 @@ podTemplate(label: 'build-agent-go',
     hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock')
   ]) {
   node('build-agent-go') {
+    checkout scm
+
     stage('Download dependencies') {
       container('golang') {
-        git 'https://github.com/jdrahos/a10bridge.git'
+//        git 'https://github.com/jdrahos/a10bridge.git'
         sh 'pwd'
         sh 'printenv | sort'
         sh 'ls -lah'
