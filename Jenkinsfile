@@ -9,6 +9,8 @@ podTemplate(label: 'build-agent-go',
   node('build-agent-go') {
     stage('Download dependencies') {
       container('golang') {
+        sh 'pwd'
+        sh 'printenv | sort'
         sh 'apk add --no-cache git'
         sh 'export GOPATH="$WORKSPACE";cd "$WORKSPACE/src/a10bridge";dep ensure'
       }
