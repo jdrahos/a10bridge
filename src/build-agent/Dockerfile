@@ -49,8 +49,12 @@ RUN set -eux; \
 # install dep for dependency management
 	curl -fsSL -o /usr/local/go/bin/dep https://github.com/golang/dep/releases/download/v0.4.1/dep-linux-amd64 && \
 	chmod +x /usr/local/go/bin/dep; \
+	\
 	rm -rf /go-alpine-patches; \
 	apk del .build-deps; \
+	\
+# install git for dep
+	apk add --no-cache git; \
 	\
 	export PATH="/usr/local/go/bin:$PATH"; \
 	go version
