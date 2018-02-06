@@ -1,5 +1,5 @@
 pipeline {
-    agent {
+  agent {
     kubernetes {
       label 'build-agent-go'
       containerTemplate {
@@ -19,7 +19,6 @@ pipeline {
         }
       }
     }
-
     stage('Download dependencies') {
       steps {
         container('build-agent-go') {
@@ -53,4 +52,4 @@ pipeline {
       }
     }
   }
-}_
+}
