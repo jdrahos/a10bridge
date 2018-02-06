@@ -9,6 +9,7 @@ podTemplate(label: 'build-agent-go',
   node('build-agent-go') {
     stage('Download dependencies') {
       container('golang') {
+        git 'https://github.com/jdrahos/a10bridge.git'
         sh 'pwd'
         sh 'printenv | sort'
         sh 'ls -lah'
