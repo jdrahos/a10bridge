@@ -26,7 +26,7 @@ podTemplate(label: 'build-agent-go',
         sh 'export GOPATH="$PWD";cd src/a10bridge; CGO_ENABLED=0 GOOS=linux go build -a -tags netgo -ldflags \'-w\' .'
       }
     }
-    stage('Build Docker Image') {
+    stage('Build and push docker Image') {
       container('docker') {
         sh 'docker build -t registry.pulsepoint.com/a10bridge src/a10bridge'
         sh 'docker push registry.pulsepoint.com/a10bridge'
