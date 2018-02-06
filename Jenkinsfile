@@ -17,7 +17,7 @@ pipeline {
     stage('Download dependencies') {
       steps {
         container('build-agent-go') {
-          sh 'ls -lah "$WORKSPACE"'
+          sh 'sleep 600'
           sh 'cd "$GOPATH/src/a10bridge";dep ensure'
         }
       }
