@@ -30,6 +30,8 @@ podTemplate(label: 'build-agent-go',
 
     stage('Build application') {
       container('golang') {
+        sh 'curl -fsSL -o /usr/local/go/bin/dep https://github.com/golang/dep/releases/download/v0.4.1/dep-linux-amd64 && chmod +x /usr/local/go/bin/dep;'
+        sh 'export GOPATH="$PWD";cd "src/a10bridge";dep ensure'
         sh 'export GOPATH="$PWD";cd src/a10bridge; CGO_ENABLED=0 GOOS=linux go build -a -tags netgo -ldflags \'-w\' .'
       }
     }
