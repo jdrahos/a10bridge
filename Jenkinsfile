@@ -18,10 +18,16 @@ podTemplate(label: 'build-agent-go',
     }
     stage('Test application') {
       container('golang') {
-        sh 'export GOPATH="$PWD";cd src/a10bridge; go build -v ./...'
         sh 'export GOPATH="$PWD";cd src/a10bridge; go test -v ./...'
       }
     }
+  }
+
+  input message: 'Should we build and push docker image to registry?', ok: 'Yes, we should.', parameters: [string(defaultValue: 'v0.0', description: 'Version of the image', name: 'IMAGE_TAG')], submitterParameter: 'IMAGE_TAG'
+
+  node('build-agent-go') {
+    checkout scm
+
     stage('Build application') {
       container('golang') {
         sh 'export GOPATH="$PWD";cd src/a10bridge; CGO_ENABLED=0 GOOS=linux go build -a -tags netgo -ldflags \'-w\' .'
@@ -29,7 +35,6 @@ podTemplate(label: 'build-agent-go',
     }
     stage('Build Docker Image') {
       container('docker') {
-        input message: 'Should we build and push docker image to registry?', ok: 'Yes, we should.', parameters: [string(defaultValue: 'v0.0', description: 'Version of the image', name: 'IMAGE_TAG')], submitterParameter: 'IMAGE_TAG'
         sh 'printenv | sort'
         sh 'docker build -t registry.pulsepoint.com/a10bridge:${IMAGE_TAG} src/a10bridge'
         sh 'docker push registry.pulsepoint.com/a10bridge:${IMAGE_TAG}'
