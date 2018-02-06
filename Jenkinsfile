@@ -40,7 +40,7 @@ pipeline {
       }
       steps {
         container('build-agent-go') {
-          sh "CGO_ENABLED=0 GOOS=linux go build -a -tags netgo -ldflags '-w' $GOPATH/src/a10bridge"
+          sh "cd $GOPATH/src/a10bridge; CGO_ENABLED=0 GOOS=linux go build -a -tags netgo -ldflags '-w' ."
           sh 'docker build -t registry.pulsepoint.com/a10bridge:${IMAGE_TAG} "$GOPATH/src/a10bridge"'
           sh 'docker push registry.pulsepoint.com/a10bridge:${IMAGE_TAG}'
         }
