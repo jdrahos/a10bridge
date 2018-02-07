@@ -203,6 +203,10 @@ func (suite *TestSuite) TestBuildConfig_invalidConfigFile() {
 }
 
 func (suite *TestSuite) TestBuildConfig_unreadableConfigFile() {
+	if os.Geteuid() == 0 {
+		return
+	}
+
 	err := os.Chmod("testdata/config1.yaml", 0000)
 	if err != nil {
 		suite.T().Skip("Unable to prepare unreadable file for test")
